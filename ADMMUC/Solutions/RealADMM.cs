@@ -309,9 +309,8 @@ namespace ADMMUC.Solutions
                 }
                 else
                 {
-                    var SGU = new GeneratorQuadratic();
-                    SGU.SetMultiplier(unit.A, unit.B, unit.C, unit.StartCostInterval.First(), pMax, pMin, RU, RD, MinUp, minDownTime, SU, SD, totalTime);
-                    SGU.Unit = unit;
+                    var SGU = new GeneratorQuadratic(unit.A, unit.B, unit.C, unit.StartCostInterval.First(), pMax, pMin, RU, RD, MinUp, minDownTime, SU, SD, totalTime);
+                 //   SGU.Unit = unit;
                     GSolutions[u] = new GenerationSolution(SGU, totalTime, PowerSystem.Nodes.First(node => node.UnitsIndex.Contains(u)).ID);
 
                     SGU.CreateEnv(GLOBAL.RelaxGurobi);
@@ -321,9 +320,8 @@ namespace ADMMUC.Solutions
             for (int n = 0; n < totalNodes; n++)
             {
                 int index = totalUnits + n;
-                var UC = new GeneratorQuadratic();
                 var max = 10000;
-                UC.SetMultiplier(0, 10000, 0, 0, max, 0, max, max, 2, 2, max, max, totalTime);
+                var UC = new GeneratorQuadratic(0, 10000, 0, 0, max, 0, max, max, 2, 2, max, max, totalTime);
                 Console.WriteLine(index);
                 GSolutions[index] = new GenerationSolution(UC, totalTime,  n);
                 Console.WriteLine();

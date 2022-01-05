@@ -9,6 +9,7 @@ using System.IO;
 
 namespace ADMMUC
 {
+    [Serializable]
     public class GeneratorQuadratic
     {
         public int RampUp;
@@ -31,8 +32,20 @@ namespace ADMMUC
 
         public List<double> LagrangeMultipliers = new List<double>();
         public int totalTime;
-        readonly Stopwatch sw = new Stopwatch();
-        public void SetMultiplier(double a, double b, double c, double start, int pMax, int pMin, int rampUp, int rampDown, int minUpTime, int minDownTime, int su, int sd, int totalTime)
+        // readonly Stopwatch sw = new Stopwatch();
+        public double[] BM;
+        public double[] CM;
+
+        internal void PrintStats()
+        {
+            Console.WriteLine("[{0},{1}] +{2}  -{3}   {4}  {5}  {6} {7}", pMin, pMax, RampUp, RampDown, SU, SD, minUpTime, minDownTime);
+        }
+
+        private double totaltime = 0;
+
+
+
+        public GeneratorQuadratic(double a, double b, double c, double start, int pMax, int pMin, int rampUp, int rampDown, int minUpTime, int minDownTime, int su, int sd, int totalTime)
         {
 
             this.pMax = pMax;
@@ -62,8 +75,7 @@ namespace ADMMUC
             LagrangeMultipliers = LM;
 
         }
-        public double[] BM;
-        public double[] CM;
+
         public void SetBM(double[] lm)
         {
             BM = lm;
@@ -167,15 +179,6 @@ namespace ADMMUC
             return (returnvalue, ReevalSolution(), P.Select(x => x.X).ToArray()); 
         }
 
-        internal void PrintStats()
-        {
-            Console.WriteLine("[{0},{1}] +{2}  -{3}   {4}  {5}  {6} {7}", pMin, pMax, RampUp, RampDown, SU, SD, minUpTime, minDownTime);
-        }
-
-        private double totaltime = 0;
-
-
-        public Unit Unit;
 
         private double ReevalSolution()
         {

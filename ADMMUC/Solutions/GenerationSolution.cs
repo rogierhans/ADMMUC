@@ -8,6 +8,7 @@ using ADMMUC._1UC;
 
 namespace ADMMUC.Solutions
 {
+    [Serializable]
     public class GenerationSolution
     {
         readonly int NodeID;
@@ -84,8 +85,17 @@ namespace ADMMUC.Solutions
 
             if (!test) return 0;
             var (gscore, _, _) = SGUC.CalcOptimum();
-            if(Math.Abs(gscore - ADMMCost) > 0.001)
-            Console.WriteLine(Math.Abs(gscore - ADMMCost));
+            if (Math.Abs(gscore - ADMMCost) > 0.001)
+            {
+
+                Console.WriteLine("L max:{0}", LagrangeMultipliers.Max());
+                Console.WriteLine("B max:{0}", Bmultiplier.Max());
+                Console.WriteLine("C max:{0}", Cmultiplier.Max());
+                Console.WriteLine(Math.Abs(gscore - ADMMCost));
+                SGUC.Print();
+                SGUC.PrintStats();
+
+            }
             return Math.Abs(gscore - ADMMCost);
         }
 
