@@ -11,50 +11,15 @@ namespace ADMMUC
 {
     static class U
     {
-        public static string InstanceFolder = Directory.GetParent(Environment.CurrentDirectory).Parent.Parent.Parent.Parent.FullName + @"\Data\NewInstances\";
         public static string OutputFolder = @"E:\Out\";// Directory.GetParent(Environment.CurrentDirectory).Parent.Parent.FullName + @"\Output\";
-        public static Random RNG = new ();
+        public static Random RNG = new();
         public static bool GEO = true;
 
 
-        public static double DemandFactor = 1
-            ;
+        public static double DemandFactor = 1  ;
 
         public static int counter = 0;
-        public static Dictionary<string, List<string>> ReadFolder(string folder)
-        {
-            Dictionary<string, List<string>> dict = new Dictionary<string, List<string>>();
-            (new DirectoryInfo(folder).GetFiles()).ToList().ForEach(x =>
-            {
-                dict[x.Name] = ReadFile(x.FullName);
-            });
-            return dict;
-        }
-
-        public static Dictionary<string, List<List<double>>> ReadFolderMatrix(string folder, string type)
-        {
-
-            Dictionary<string, List<List<double>>> dict = new Dictionary<string, List<List<double>>>();
-            (new DirectoryInfo(folder).GetFiles(type)).ToList().ForEach(x => dict[x.Name.Split('.')[0]] = ReadMartix(x.FullName));
-            return dict;
-        }
-
-        public static List<List<double>> ReadMartix(string filename)
-        {
-            List<List<double>> lines = new List<List<double>>();
-            using (var sw = File.OpenText(filename))
-            {
-
-                string line = sw.ReadLine();
-                while (line != null)
-                {
-                    lines.Add(line.Split(';').ToList().Select(x => Double.Parse(x)).ToList());
-                    line = sw.ReadLine();
-                }
-            }
-            return lines;
-
-        }
+       
         public static List<List<double>> ReverseMatrix(List<List<double>> matrix)
         {
             List<List<double>> rmatrix = new List<List<double>>();
@@ -69,22 +34,6 @@ namespace ADMMUC
             }
 
             return rmatrix;
-        }
-
-        public static List<string> ReadFile(string filename)
-        {
-            List<string> lines = new List<string>();
-            using (var sw = File.OpenText(filename))
-            {
-
-                string line = sw.ReadLine();
-                while (line != null)
-                {
-                    lines.Add(line);
-                    line = sw.ReadLine();
-                }
-            }
-            return lines;
         }
 
         // static object SteveJobs = new object();
@@ -238,7 +187,7 @@ namespace ADMMUC
         internal static PowerSystem GetPowerSystem(string filenameInstance, ConstraintConfiguration CC)
         {
 
-            var lines = U.ReadFile(filenameInstance);
+            var lines = File.ReadAllLines(filenameInstance).ToList();
             //Console.WriteLine(lines.Count);
             var units = ParseUnits(CC, GetLineInterval("units", lines).Skip(1).ToList());
             var demandString = GetLineInterval("demands", lines)[1].Split(';')[2];

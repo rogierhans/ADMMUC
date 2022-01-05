@@ -9,22 +9,22 @@ using System.Diagnostics;
 
 namespace ADMMUC.Solutions
 {
-    class PowerSystemSolution
+   public class PowerSystemSolution
     {
-        readonly PowerSystem PowerSystem;
-        readonly double[,] NodeMultipliers;
+        protected readonly PowerSystem PowerSystem;
+        protected readonly double[,] NodeMultipliers;
         public GenerationSolution[] GSolutions = Array.Empty<GenerationSolution>();
         public ResSolution[] RSolutions = Array.Empty<ResSolution>();
         public ADMMTrans TSolution;
 
-        readonly private int totalTime;
-        readonly private int totalNodes;
-        readonly private int totalRes;
-        readonly private int totalUnits;
-        private double Rho;
-        readonly private double RhoMultiplier;
-        readonly private double multiplierMultiplier;
-        readonly private int rhoUpdateCounter;
+        readonly protected int totalTime;
+        readonly protected int totalNodes;
+        readonly protected int totalRes;
+        readonly protected int totalUnits;
+        protected double Rho;
+        readonly protected double RhoMultiplier;
+        readonly protected double multiplierMultiplier;
+        readonly protected int rhoUpdateCounter;
 
         // readonly ResolveTrans Resolve;
         public PowerSystemSolution(string fileName, int totalTime, double rho, double rhoMultiplier, int rhoUpdateCounter, double multiplierMultiplier)
@@ -77,9 +77,9 @@ namespace ADMMUC.Solutions
         public double FinalScore;
         public int FinalIteration;
         public int i = 0;
-        int solutioncounter = 0;
-        int counter = 0;
-        public void RunIterations(int maxIterations)
+        protected int solutioncounter = 0;
+        protected int counter = 0;
+        public virtual void RunIterations(int maxIterations)
         {
 
             while (i++ < maxIterations && !Converged())
@@ -112,9 +112,11 @@ namespace ADMMUC.Solutions
             return AbsoluteResidualLoad() * PowerSystem.VOLL + GSolutions.Sum(g => g.ReevalCost);
         }
 
-        readonly Random RNG = new();
-        readonly List<double> Values = new();
-        public void Go(int rhoUpdateCounter)
+        protected  readonly Random RNG = new();
+        protected  readonly List<double> Values = new();
+
+        public bool Test1UC =true;
+        public virtual void Go(int rhoUpdateCounter)
         {
             var CurrentDemand = GetDemand();
             foreach (var g in Enumerable.Range(0, RSolutions.Length).OrderBy(i => RNG.NextDouble()).ToList())
@@ -148,7 +150,7 @@ namespace ADMMUC.Solutions
 
 
 
-        private void CreateResSolutions(int totalTime)
+        protected void CreateResSolutions(int totalTime)
         {
             RSolutions = new ResSolution[totalRes];
             for (int r = 0; r < totalRes; r++)
@@ -157,7 +159,7 @@ namespace ADMMUC.Solutions
             }
         }
 
-        private void CreateGenerationSolution(int totalTime)
+        protected void CreateGenerationSolution(int totalTime)
         {
             GSolutions = new GenerationSolution[totalUnits + totalNodes];
             for (int u = 0; u < totalUnits; u++)
@@ -197,7 +199,7 @@ namespace ADMMUC.Solutions
             }
         }
 
-        private bool ConvergedObjective()
+        protected bool ConvergedObjective()
 
         {
             int k = 10;
@@ -211,7 +213,7 @@ namespace ADMMUC.Solutions
         }
 
 
-        private double AbsoluteResidualLoad()
+        protected double AbsoluteResidualLoad()
         {
             double total = 0;
             var demand = GetDemand();

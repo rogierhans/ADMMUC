@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace ADMMUC.Solutions
 {
-    class ResSolution
+  public   class ResSolution
     {
         public double[] MaxDisptach;
         public double[] Dispatch;

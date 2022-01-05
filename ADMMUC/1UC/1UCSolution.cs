@@ -6,19 +6,19 @@ using System.Threading.Tasks;
 
 namespace ADMMUC._1UC
 {
-    class SUCSolution
+   public  class SUCSolution
     {
         public List<DPQSolution> Steps;
         public double GenerationCostOnly;
         public double CostADMM;
-        public double CostLR;
+        //public double CostLR;
 
         public SUCSolution(GeneratorQuadratic UC, List<DPQSolution> steps, double costADMM)
         {
             Steps = steps;
             CostADMM = costADMM;
             GenerationCostOnly = ReevalSolution(UC);
-            CostLR = ReevalSolutionLR(UC);
+         //   CostLR = ReevalSolutionLR(UC);
         }
         private double ReevalSolution(GeneratorQuadratic UC)
         {

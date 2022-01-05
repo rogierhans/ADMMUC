@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace ADMMUC
 {
-    class StorageUnit
+    public class StorageUnit
     {
         readonly public string ID;
         readonly public string Name;

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace ADMMUC
 {
-    class TransmissionLine
+    public class TransmissionLine
     {
         public Node From;
         public Node To;

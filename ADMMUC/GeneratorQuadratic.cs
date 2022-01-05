@@ -54,6 +54,7 @@ namespace ADMMUC
             this.totalTime = totalTime;
             BM = new double[totalTime];
             CM = new double[totalTime];
+            CreateEnv(false);
         }
 
         public void SetLM(List<double> LM)

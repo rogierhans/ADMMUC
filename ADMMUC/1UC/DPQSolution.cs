@@ -12,10 +12,10 @@ namespace ADMMUC._1UC
         public int Tau;
         public bool On;
         public double P;
-        public F F;
+        public F? F;
         public double Value;
 
-        public DPQSolution(int t, int tau, bool on, double p, F f, double value)
+        public DPQSolution(int t, int tau, bool on, double p, F? f, double value)
         {
             T = t;
             Tau = tau;
@@ -33,7 +33,7 @@ namespace ADMMUC._1UC
                 return OffPrevStep(UC, Fs, Off);
             }
             else
-                return OnPrevStep(UC, Fs, Off);
+                return OnPrevStep(UC, Fs);
         }
         public DPQSolution OffPrevStep(GeneratorQuadratic UC, List<F>[] Fs, double[,] Off)
         {
@@ -41,7 +41,7 @@ namespace ADMMUC._1UC
             {
                 double bestP = double.MaxValue;
                 double bestValue = double.MaxValue;
-                F bestF = null;
+                F bestF = Fs[T - 1].First();
                 //Console.WriteLine("T:{0}", T);
                 foreach (var F in Fs[T - 1].Where(F => ((T - 1) - F.StartIndex) >= UC.minUpTime - 1 || F.StartIndex == 0))
                 {
@@ -83,7 +83,7 @@ namespace ADMMUC._1UC
             }
 
         }
-        public DPQSolution OnPrevStep(GeneratorQuadratic UC, List<F>[] Fs, double[,] Off)
+        public DPQSolution OnPrevStep(GeneratorQuadratic UC, List<F>[] Fs)
         {
             if (Tau == 0)
             {

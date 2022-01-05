@@ -7,7 +7,7 @@ using System.IO;
 using ADMMUC.PWS;
 namespace ADMMUC
 {
-    class PowerSystem
+   public class PowerSystem
     {
 
         public string Name;
@@ -42,7 +42,7 @@ namespace ADMMUC
            // PTDF = new PTDF(lines, nodes).GetPTDF();
         }
     }
-    class ConstraintConfiguration
+    public class ConstraintConfiguration
     {
 
         public bool RampingLimits;

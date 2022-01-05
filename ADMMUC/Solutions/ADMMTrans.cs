@@ -8,7 +8,7 @@ using System.Diagnostics;
 using System.IO;
 namespace ADMMUC.Solutions
 {
-    class ADMMTrans
+  public  class ADMMTrans
     {
         private readonly List<TransmissionLine> Lines;
 

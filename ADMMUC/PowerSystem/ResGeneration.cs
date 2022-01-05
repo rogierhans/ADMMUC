@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace ADMMUC.PWS
 {
-    class ResGeneration
+    public class ResGeneration
     {
         public string Name;
         public int ID;

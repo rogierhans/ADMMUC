@@ -8,15 +8,16 @@ using ADMMUC._1UC;
 
 namespace ADMMUC.Solutions
 {
-    class GenerationSolution
+    public class GenerationSolution
     {
         readonly int NodeID;
 
 
         public double ReevalCost;
         public double ADMMCost;
-        public  GeneratorQuadratic SGUC;
+        public GeneratorQuadratic SGUC;
         public double[] CurrentDispatchAtTime;
+        public SUCSolution OldSolution;
         // readonly bool DebugCheck = true;
         public GenerationSolution(GeneratorQuadratic SGUC, int time, int nodeID)
         {
@@ -51,8 +52,8 @@ namespace ADMMUC.Solutions
 
             return solution.CostADMM;
         }
-        public SUCSolution OldSolution;
-        public void Reevaluate(double[,] Multipliers, double[,] Demand, double rho, int totalTime)
+
+        public double Reevaluate(double[,] Multipliers, double[,] Demand, double rho, int totalTime, bool test = false)
         {
             Substract(Demand);
             var LagrangeMultipliers = new double[totalTime];
@@ -80,17 +81,16 @@ namespace ADMMUC.Solutions
             }
             OldSolution = solution;
             Add(Demand);
-            //var test = SGUC.CalcOptimum();
 
-            //if (Math.Abs(test - ADMMCost) > 0.001)
-            //{
-            //    Console.WriteLine("{0} {1}", test, ADMMCost);
-            //    Console.ReadLine();
-            //}
-
+            if (!test) return 0;
+            var (gscore, _, _) = SGUC.CalcOptimum();
+            if(Math.Abs(gscore - ADMMCost) > 0.001)
+            Console.WriteLine(Math.Abs(gscore - ADMMCost));
+            return Math.Abs(gscore - ADMMCost);
         }
 
-        public void GurobiDispose() {
+        public void GurobiDispose()
+        {
             SGUC.Dispose();
         }
 

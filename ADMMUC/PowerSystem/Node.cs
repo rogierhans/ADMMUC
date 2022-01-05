@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace ADMMUC
 {
-    class Node
+   public class Node
     {
         public int ID;
         public string Name;
