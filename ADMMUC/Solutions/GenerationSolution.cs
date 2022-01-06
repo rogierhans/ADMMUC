@@ -8,6 +8,7 @@ using ADMMUC._1UC;
 
 namespace ADMMUC.Solutions
 {
+    [Serializable]
     public class GenerationSolution
     {
         readonly int NodeID;
@@ -19,12 +20,13 @@ namespace ADMMUC.Solutions
         public double[] CurrentDispatchAtTime;
         public SUCSolution OldSolution;
         // readonly bool DebugCheck = true;
+        private Gurobi1UC G1UC;
         public GenerationSolution(GeneratorQuadratic SGUC, int time, int nodeID)
         {
             this.SGUC = SGUC;
             CurrentDispatchAtTime = new double[time];
             NodeID = nodeID;
-
+            G1UC = new Gurobi1UC(SGUC);
         }
         public void Print()
         {
@@ -83,15 +85,24 @@ namespace ADMMUC.Solutions
             Add(Demand);
 
             if (!test) return 0;
-            var (gscore, _, _) = SGUC.CalcOptimum();
-            if(Math.Abs(gscore - ADMMCost) > 0.001)
-            Console.WriteLine(Math.Abs(gscore - ADMMCost));
+            var (gscore, _, _) = G1UC.CalcOptimum();
+            if (Math.Abs(gscore - ADMMCost) > 0.001)
+            {
+
+                Console.WriteLine("L max:{0}", LagrangeMultipliers.Max());
+                Console.WriteLine("B max:{0}", Bmultiplier.Max());
+                Console.WriteLine("C max:{0}", Cmultiplier.Max());
+                Console.WriteLine(Math.Abs(gscore - ADMMCost));
+                G1UC.Print();
+                SGUC.PrintStats();
+
+            }
             return Math.Abs(gscore - ADMMCost);
         }
 
         public void GurobiDispose()
         {
-            SGUC.Dispose();
+            G1UC.Dispose();
         }
 
         public void ReGurobi(double[,] Multipliers, double[,] Demand, double rho, int totalTime)
@@ -113,7 +124,7 @@ namespace ADMMUC.Solutions
             SGUC.SetLM(LagrangeMultipliers.ToList());
             SGUC.SetBM(Bmultiplier);
             SGUC.SetCM(Cmultiplier);
-            (ADMMCost, ReevalCost, CurrentDispatchAtTime) = SGUC.CalcOptimum();
+            (ADMMCost, ReevalCost, CurrentDispatchAtTime) = G1UC.CalcOptimum();
 
             Add(Demand);
 
