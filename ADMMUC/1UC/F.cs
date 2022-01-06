@@ -10,7 +10,7 @@ namespace ADMMUC._1UC
 {
     public class F
     {
-        GeneratorQuadratic UC;
+        SUC UC;
         public LinkedList<QuadraticInterval> Intervals = new LinkedList<QuadraticInterval>();
         public int StartIndex = 0;
         //public LinkedListNode<QuadraticInterval> OldOptimum;
@@ -27,7 +27,7 @@ namespace ADMMUC._1UC
             }
             //OldOptimum = ZPQuadratic.OldOptimum;
         }
-        public F(GeneratorQuadratic uc, int startIndex, double startCost)
+        public F(SUC uc, int startIndex, double startCost)
         {
             UC = uc;
             StartIndex = startIndex;

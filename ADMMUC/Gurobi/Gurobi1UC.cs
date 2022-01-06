@@ -9,8 +9,8 @@ namespace ADMMUC.Solutions
 {
     public class Gurobi1UC
     {
-        GeneratorQuadratic GQ;
-        public Gurobi1UC(GeneratorQuadratic gq) {
+        SUC GQ;
+        public Gurobi1UC(SUC gq) {
             GQ = gq;
             CreateEnv(false);
         }

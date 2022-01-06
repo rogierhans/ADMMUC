@@ -19,9 +19,6 @@
     <Reference Include="Gurobi80.NET">
       <HintPath>..\..\..\..\..\..\gurobi801\win64\bin\Gurobi80.NET.dll</HintPath>
     </Reference>
-    <Reference Include="Gurobi81.NET">
-      <HintPath>..\..\..\..\..\..\Program Files (x86)\Gurobi\win64\bin\Gurobi81.NET.dll</HintPath>
-    </Reference>
   </ItemGroup>
 
 </Project>

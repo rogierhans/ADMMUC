@@ -21,13 +21,13 @@ class Program
         int totalTime = 24;
         var rhoUpdate = 1.1;
         var rho = 1E-05;
-        var count = 10;
+        var count = 1;
         var sw = new Stopwatch();
         sw.Start();
         for (int iter = 0; iter < 1; iter++)
         {
             var PSS = new PowerSystemSolution(filename, totalTime, rho, rhoUpdate, count, 1);
-            PSS.Test1UC = true;
+          //  PSS.Test1UC = true;
             PSS.RunIterations(10000);
             Console.WriteLine("{0}", PSS.FinalScore);
           //  Console.ReadLine();

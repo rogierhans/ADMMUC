@@ -24,7 +24,7 @@ namespace ADMMUC._1UC
             F = f;
             Value = value;
         }
-        public DPQSolution GetBestPrev(GeneratorQuadratic UC, List<F>[] Fs, double[,] Off)
+        public DPQSolution GetBestPrev(SUC UC, List<F>[] Fs, double[,] Off)
         {
             if (T == 0)
                 throw new Exception("?????");
@@ -35,7 +35,7 @@ namespace ADMMUC._1UC
             else
                 return OnPrevStep(UC, Fs);
         }
-        public DPQSolution OffPrevStep(GeneratorQuadratic UC, List<F>[] Fs, double[,] Off)
+        public DPQSolution OffPrevStep(SUC UC, List<F>[] Fs, double[,] Off)
         {
             if (Tau == 0)
             {
@@ -83,7 +83,7 @@ namespace ADMMUC._1UC
             }
 
         }
-        public DPQSolution OnPrevStep(GeneratorQuadratic UC, List<F>[] Fs)
+        public DPQSolution OnPrevStep(SUC UC, List<F>[] Fs)
         {
             if (Tau == 0)
             {

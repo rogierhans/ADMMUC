@@ -1,9 +1,11 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using ADMMUC.Solutions;
 using ADMMUC;
+using ADMMUC._1UC;
 using System.Linq;
 using System;
 using System.Collections.Generic;
+using System.IO;
 namespace Tests
 {
     [TestClass]
@@ -24,10 +26,11 @@ namespace Tests
                 var PSS = new PowerSystemSolution(filename, totalTime, rho, rhoUpdate, count, 1);
                 PSS.Test1UC = true;
                 PSS.RunIterations(100);
-                 PSS.Deltas.ForEach(x => Assert.IsTrue( x <= 0.001));
+                PSS.Deltas.ForEach(x => Assert.IsTrue(x <= 0.001));
 
             }
         }
+
 
         [TestMethod]
         public void CA426_1UC_Long_Check()
@@ -43,7 +46,7 @@ namespace Tests
                 PSS.Test1UC = true;
                 PSS.RunIterations(100);
                 //PSS.Deltas.ForEach(x => Console.WriteLine(x));
-               PSS.Deltas.ForEach(x => Assert.IsTrue(x <= 0.001));
+                PSS.Deltas.ForEach(x => Assert.IsTrue(x <= 0.001));
 
             }
         }
@@ -61,8 +64,8 @@ namespace Tests
                 var PSS = new PowerSystemSolution(filename, totalTime, rho, rhoUpdate, count, 1);
                 PSS.Test1UC = true;
                 PSS.RunIterations(100);
-               // PSS.Deltas.ForEach(x => Console.WriteLine(x));
-               PSS.Deltas.ForEach(x => Assert.IsTrue(x <= 0.001));
+                // PSS.Deltas.ForEach(x => Console.WriteLine(x));
+                PSS.Deltas.ForEach(x => Assert.IsTrue(x <= 0.001));
 
             }
         }
@@ -73,7 +76,7 @@ namespace Tests
             var filename = @"C:\Users\Rogier\Google Drive\Data\Github\" + "GA10.uc";
             int totalTime = 24;
             var rhoUpdate = 1.1;
-            var rho = 0.0001; 
+            var rho = 0.0001;
             var count = 10;
             //for (int iter = 0; iter < 3; iter++)
             {
@@ -95,7 +98,7 @@ namespace Tests
                 var PSS = new PowerSystemSolution(@"C:\Users\Rogier\Google Drive\Data\Github\" + "RTS26.uc", totalTime, 1, 1.1, count, 1);
                 PSS.Test1UC = true;
                 PSS.RunIterations(100);
-                 PSS.Deltas.ForEach(x => Assert.IsTrue( x <= 0.001));
+                PSS.Deltas.ForEach(x => Assert.IsTrue(x <= 0.001));
 
             }
         }

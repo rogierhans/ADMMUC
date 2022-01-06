@@ -16,12 +16,12 @@ namespace ADMMUC.Solutions
 
         public double ReevalCost;
         public double ADMMCost;
-        public GeneratorQuadratic SGUC;
+        public SUC SGUC;
         public double[] CurrentDispatchAtTime;
         public SUCSolution OldSolution;
         // readonly bool DebugCheck = true;
         private Gurobi1UC G1UC;
-        public GenerationSolution(GeneratorQuadratic SGUC, int time, int nodeID)
+        public GenerationSolution(SUC SGUC, int time, int nodeID)
         {
             this.SGUC = SGUC;
             CurrentDispatchAtTime = new double[time];
@@ -44,9 +44,7 @@ namespace ADMMUC.Solutions
                 Bmultiplier[t] = 0;
                 Cmultiplier[t] = 0;
             }
-            SGUC.SetLM(LagrangeMultipliers.ToList());
-            SGUC.SetBM(Bmultiplier);
-            SGUC.SetCM(Cmultiplier);
+            SGUC.SetLM(LagrangeMultipliers.ToList(), Bmultiplier, Cmultiplier);
             var solution = new RRF(SGUC, true).GetSolution();
 
 
@@ -54,7 +52,8 @@ namespace ADMMUC.Solutions
 
             return solution.CostADMM;
         }
-
+        static int counter = 0;
+        static int extraCounter = 0;
         public double Reevaluate(double[,] Multipliers, double[,] Demand, double rho, int totalTime, bool test = false)
         {
             Substract(Demand);
@@ -71,9 +70,7 @@ namespace ADMMUC.Solutions
                 Cmultiplier[t] = rho / 2;
             }
 
-            SGUC.SetLM(LagrangeMultipliers.ToList());
-            SGUC.SetBM(Bmultiplier);
-            SGUC.SetCM(Cmultiplier);
+            SGUC.SetLM(LagrangeMultipliers.ToList(), Bmultiplier, Cmultiplier);
             var solution = new RRF(SGUC, true).GetSolution();
             ADMMCost = solution.CostADMM;
             ReevalCost = ReevalSolution(SGUC, solution.Steps);
@@ -96,6 +93,17 @@ namespace ADMMUC.Solutions
                 G1UC.Print();
                 SGUC.PrintStats();
 
+
+                SGUC.Objective = gscore;
+                SGUC.WriteToFile(@"C:\Users\Rogier\OneDrive - Universiteit Utrecht\1UCTest\Counter\" + (extraCounter++) + ".suc");
+            }
+            else
+            {
+                if (counter < 10000)
+                {
+                    SGUC.Objective = gscore;
+                    SGUC.WriteToFile(@"C:\Users\Rogier\OneDrive - Universiteit Utrecht\1UCTest\FERC\" + (counter++) + ".suc");
+                }
             }
             return Math.Abs(gscore - ADMMCost);
         }
@@ -121,9 +129,7 @@ namespace ADMMUC.Solutions
                 Cmultiplier[t] = rho / 2;
             }
 
-            SGUC.SetLM(LagrangeMultipliers.ToList());
-            SGUC.SetBM(Bmultiplier);
-            SGUC.SetCM(Cmultiplier);
+            SGUC.SetLM(LagrangeMultipliers.ToList(), Bmultiplier, Cmultiplier);
             (ADMMCost, ReevalCost, CurrentDispatchAtTime) = G1UC.CalcOptimum();
 
             Add(Demand);
@@ -144,7 +150,7 @@ namespace ADMMUC.Solutions
                 Demand[NodeID, t] = Demand[NodeID, t] - CurrentDispatchAtTime[t];
             }
         }
-        private static double ReevalSolution(GeneratorQuadratic UC, List<DPQSolution> solution)
+        private static double ReevalSolution(SUC UC, List<DPQSolution> solution)
         {
             double startCost = solution.Skip(1).Where(step => step.On && step.Tau == 0).Sum(step => UC.startCost);
             double generationCost = solution.Sum(step => (step.On ? UC.A : 0) + UC.B * step.P + UC.C * step.P * step.P);

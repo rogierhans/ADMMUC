@@ -5,16 +5,15 @@ using System.Linq;
 namespace ADMMUC._1UC
 {
 
-
-    class RRF
+    public class RRF
     {
         public bool Reduction = true;
         public List<F>[] Fs;
         double[,] stop;
-        GeneratorQuadratic UC;
+        SUC UC;
         public int maxFunctions = 0;
         public int maxInterval = 0;
-        public RRF(GeneratorQuadratic uc, bool reduction)
+        public RRF(SUC uc, bool reduction)
         {
             UC = uc;
             Reduction = reduction;

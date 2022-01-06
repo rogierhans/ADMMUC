@@ -10,7 +10,7 @@ using System.IO;
 namespace ADMMUC
 {
     [Serializable]
-    public class GeneratorQuadratic
+    public class SUC
     {
         public int RampUp;
         public int RampDown;
@@ -32,7 +32,6 @@ namespace ADMMUC
 
         public List<double> LagrangeMultipliers = new List<double>();
         public int totalTime;
-        // readonly Stopwatch sw = new Stopwatch();
         public double[] BM;
         public double[] CM;
 
@@ -41,11 +40,8 @@ namespace ADMMUC
             Console.WriteLine("[{0},{1}] +{2}  -{3}   {4}  {5}  {6} {7}", pMin, pMax, RampUp, RampDown, SU, SD, minUpTime, minDownTime);
         }
 
-        private double totaltime = 0;
 
-
-
-        public GeneratorQuadratic(double a, double b, double c, double start, int pMax, int pMin, int rampUp, int rampDown, int minUpTime, int minDownTime, int su, int sd, int totalTime)
+        public SUC(double a, double b, double c, double start, int pMax, int pMin, int rampUp, int rampDown, int minUpTime, int minDownTime, int su, int sd, int totalTime)
         {
 
             this.pMax = pMax;
@@ -67,25 +63,15 @@ namespace ADMMUC
             this.totalTime = totalTime;
             BM = new double[totalTime];
             CM = new double[totalTime];
-   
+
         }
 
-        public void SetLM(List<double> LM)
+        public void SetLM(List<double> LM, double[] bm, double[] cm)
         {
-            LagrangeMultipliers = LM;
+            LagrangeMultipliers = LM; BM = bm; CM = cm;
 
         }
 
-        public void SetBM(double[] lm)
-        {
-            BM = lm;
-
-        }
-        public void SetCM(double[] lm)
-        {
-            CM = lm;
-
-        }
         public void SetRandomLM()
         {
             LagrangeMultipliers = new List<double>();
@@ -96,5 +82,17 @@ namespace ADMMUC
 
             }
         }
+
+        public double Objective = 0;
+
+        public void WriteToFile(string filename)
+        {
+            BinarySerialization.WriteToBinaryFile(filename, this);
+        }
+        public static SUC ReadFromFile(string filename)
+        {
+            return BinarySerialization.ReadFromBinaryFile<SUC>(filename);
+        }
+
     }
 }
