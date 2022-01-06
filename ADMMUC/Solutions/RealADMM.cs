@@ -313,7 +313,7 @@ namespace ADMMUC.Solutions
                  //   SGU.Unit = unit;
                     GSolutions[u] = new GenerationSolution(SGU, totalTime, PowerSystem.Nodes.First(node => node.UnitsIndex.Contains(u)).ID);
 
-                    SGU.CreateEnv(GLOBAL.RelaxGurobi);
+                   // SGU.CreateEnv(GLOBAL.RelaxGurobi);
                 }
             }
             Console.Write(PowerSystem.Nodes.Count);
@@ -329,7 +329,7 @@ namespace ADMMUC.Solutions
                 Console.WriteLine();
                 Console.Write(PowerSystem.Nodes[n]);
                 PowerSystem.Nodes[n].UnitsIndex.Add(index);
-                UC.CreateEnv(GLOBAL.RelaxGurobi);
+                //UC.CreateEnv(GLOBAL.RelaxGurobi);
             }
         }
 

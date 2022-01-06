@@ -1,51 +1,38 @@
-﻿namespace ADMMUC._1UC
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace ADMMUC._1UC
 {
+
+
     class RRF
     {
         public bool Reduction = true;
         public List<F>[] Fs;
-        readonly double[,] OffStateCosts;
-        readonly GeneratorQuadratic UC;
-        public int MaxFunctions = 0;
-        public int MaxInterval = 0;
-
+        double[,] stop;
+        GeneratorQuadratic UC;
+        public int maxFunctions = 0;
+        public int maxInterval = 0;
         public RRF(GeneratorQuadratic uc, bool reduction)
         {
             UC = uc;
             Reduction = reduction;
-            OffStateCosts = new double[UC.LagrangeMultipliers.Count, UC.minDownTime];
-            Fs = new List<F>[UC.LagrangeMultipliers.Count];
-            for (int i = 0; i < UC.LagrangeMultipliers.Count; i++)
-            {
-                Fs[i] = new List<F>();
-            }
-            AddNew(0, UC.startCost);
-            for (int t = 1; t < UC.totalTime; t++)
-            {
-                OffStateCosts[t, UC.minDownTime - 1] = Math.Min(OffStateCosts[t - 1, UC.minDownTime - 2], OffStateCosts[t - 1, UC.minDownTime - 1]);
-                for (int tau = 1; tau < UC.minDownTime - 1; tau++)
-                {
-                    OffStateCosts[t, tau] = OffStateCosts[t - 1, tau - 1];
-                }
-                OffStateCosts[t, 0] = GetBestStop(t);
 
-                Update(t);
-                var bestStart = Math.Min(UC.startCost, UC.startCost + OffStateCosts[t - 1, UC.minDownTime - 1]);
-                AddNew(t, bestStart);
-            }
         }
         public SUCSolution GetSolution()
         {
+            FillInDP();
             int t = UC.LagrangeMultipliers.Count() - 1;
             double bestValue = double.MaxValue;
             int bestTau = int.MaxValue;
             bool On = false;
             double bestP = 0;
-            F bestF = Fs[UC.LagrangeMultipliers.Count - 1].First();
+            F bestF = null;
 
             for (int tau = 0; tau < UC.minDownTime; tau++)
             {
-                double value = OffStateCosts[t, tau];
+                double value = stop[t, tau];
                 if (value <= bestValue)
                 {
                     bestValue = value;
@@ -59,6 +46,7 @@
                     var MinimumPointAndValue = interval.MinimumPointAndValue(UC.pMin, UC.pMax);
                     var minimum = MinimumPointAndValue.Item1;
                     var valueAtMinimum = MinimumPointAndValue.Item2;
+                    // Console.WriteLine("{0} {1} {2} {3} {4}", F.StartIndex,  valueAtMinimum, minimum, interval.From, interval.To);
                 }
             }
 
@@ -77,32 +65,71 @@
                         bestTau = UC.LagrangeMultipliers.Count - 1 - F.StartIndex;
                         bestF = F;
                     }
+
                 }
             }
+
+            //Console.WriteLine("Best {0} {1} {2} ", On ? bestF.StartIndex.ToString() : "xD", bestValue,bestP);
+
             List<DPQSolution> solution = new List<DPQSolution>();
             DPQSolution bestLastStep = new DPQSolution(t, bestTau, On, bestP, bestF, bestValue);
+            // Console.WriteLine("Value: " + bestValue);
+            //bestLastStep.Print();
             solution.Add(bestLastStep);
             double prevBestValue = 0;
             var caluclatedValue = bestValue - (bestLastStep.On ? bestLastStep.F.ValueAtP(bestLastStep.T, bestLastStep.P) : 0);
             while (t-- > 0)
             {
-                bestLastStep = bestLastStep.GetBestPrev(UC, Fs, OffStateCosts);
+                bestLastStep = bestLastStep.GetBestPrev(UC, Fs, stop);
                 caluclatedValue = caluclatedValue - (bestLastStep.On ? bestLastStep.F.ValueAtP(bestLastStep.T, bestLastStep.P) : 0);
                 solution.Add(bestLastStep);
                 prevBestValue = bestLastStep.Value - (bestLastStep.On ? bestLastStep.F.ValueAtP(bestLastStep.T, bestLastStep.P) : 0);
             }
             solution.Reverse();
+            //Fill in Dp twee keer!!!!
+
+            //Console.WriteLine(GetScore());
+            //UC.CreateEnv();
+            //UC.CalcOptimum();
+            //Console.ReadLine();
             return new SUCSolution(UC, solution, GetScore());
         }
 
+        public void FillInDP()
+        {
+            stop = new double[UC.LagrangeMultipliers.Count, UC.minDownTime];
+            for (int tau = 0; tau < UC.minDownTime; tau++)
+            {
+                stop[0, tau] = 0;
+            }
+            Fs = new List<F>[UC.LagrangeMultipliers.Count];
+            for (int z = 0; z < UC.LagrangeMultipliers.Count; z++)
+            {
+                Fs[z] = new List<F>();
+            }
+            AddNew(0, UC.startCost);
+            for (int h = 1; h < UC.totalTime; h++)
+            {
+                stop[h, UC.minDownTime - 1] = Math.Min(stop[h - 1, UC.minDownTime - 2], stop[h - 1, UC.minDownTime - 1]);
+                for (int t = 1; t < UC.minDownTime - 1; t++)
+                {
+                    stop[h, t] = stop[h - 1, t - 1];
+                }
+                stop[h, 0] = GetBestStop(h);
+                Update(h);
+                var bestStart = Math.Min(UC.startCost, UC.startCost + stop[h - 1, UC.minDownTime - 1]);
+                AddNew(h, bestStart);
 
+
+            }
+        }
         public double GetScore()
         {
             //FillInDP();
             double bestValue = 0;
             for (int tau = 0; tau < UC.minDownTime; tau++)
             {
-                bestValue = Math.Min(bestValue, OffStateCosts[UC.LagrangeMultipliers.Count - 1, tau]);
+                bestValue = Math.Min(bestValue, stop[UC.LagrangeMultipliers.Count - 1, tau]);
             }
             bestValue = Math.Min(bestValue, BestValue(UC.LagrangeMultipliers.Count - 1));
             return bestValue;
@@ -120,26 +147,43 @@
             }
             return bestStop;
         }
-        internal void Update(int t)
+
+        // public List<int> tempCount = new List<int>();
+        internal void Update(int h)
         {
-            foreach (var prevF in Fs[t - 1])
+            // Print(h);
+
+            foreach (var z in Fs[h - 1])
             {
-                Fs[t].Add(new F(prevF));
+                Fs[h].Add(new F(z));
             }
-            foreach (var F in Fs[t])
+            //ListOfZ[h] = ListOfZ[h - 1].Select(z => new ZP(z)).ToList();
+            foreach (var Z in Fs[h])
             {
-                F.NextPoints(t);
-                F.IncreasePoints(t);
+                Z.NextPoints(h);
+                Z.IncreasePoints(h);
             }
-            if (t > UC.minUpTime && Reduction)
+            if (h > UC.minUpTime && Reduction)
             {
-                RemoveNonDominatingFs(t);
+                OGremoveWeaklings(h);
+                //AltRemoveWeaklings(h);
             }
+            //Print(h);
+
+            //Picture();
+            //Console.ReadLine();
         }
 
+        //public void Picture()
+        //{
+        //    new Print(UC).Draw(ListOfZ.Select(Z => Z.Intervals.ToList()).ToList(), Reduction);
+        //}
         internal void AddNew(int h, double startCost)
         {
             Fs[h].Add(new F(UC, h, startCost));
+            //Console.WriteLine(h);
+            //Print(h);
+            //Console.WriteLine("******");
         }
 
         internal double BestValue(int h)
@@ -151,34 +195,90 @@
             }
             return bestValue;
         }
-        List<F> next = new List<F>();
 
-        static int counter = 0;
-        private void RemoveNonDominatingFs(int t)
+        private void AltRemoveWeaklings(int h)
         {
-        //    if(counter++ % 1000 == 0)
-           // Console.WriteLine(counter);
-            List<F> CurrentFs = Fs[t];
-            bool[] flagged = FlagThoseWithTauLowerThanMinimumUpTime(t, CurrentFs);
-            double lastValue = GetHighestDomain(CurrentFs);
-            int currentIndex = GetIndexOfFminimalAtP(t, CurrentFs, UC.pMin);
+            HashSet<F> keepers = new HashSet<F>();
+            double maxValue = Fs[h].Max(Z => Z.Intervals.Last.Value.To);
+            foreach (var Z in Fs[h].Where(Z => (h - Z.StartIndex) < UC.minUpTime))
+            {
+                //Console.WriteLine("{0} {1} {2}<{3}", h, Z.StartIndex, h - Z.StartIndex, UC.minDownTime);
+                //Console.ReadLine();
+                keepers.Add(Z);
+            }
+            double p = UC.pMin;
+            F currentMinimum = GetMinimalFunction(p);
             bool interSects = true;
             while (interSects)
             {
-                var currentF = CurrentFs[currentIndex];
+                F nextMinimum = null;
+                keepers.Add(currentMinimum);
                 interSects = false;
-                flagged[currentIndex] = true;
-                double currentPieceEnd = CurrentFs[currentIndex].Intervals.Last().To;
-                for (int i = 0; i < CurrentFs.Count; i++)
+                double pIntersect = currentMinimum.Intervals.Last.Value.To;
+                foreach (var otherZ in Fs[h].Where(otherZ => currentMinimum != otherZ && (h - otherZ.StartIndex) >= UC.minUpTime))
                 {
-                    int nextIndex = currentIndex;
-                    if (i != currentIndex) continue;
-                    var otherF = CurrentFs[i];
-                    bool IsCandidate = (t - otherF.StartIndex) >= UC.minUpTime;
-                    if (!IsCandidate) continue;
-                    if (currentF.DoesIntersect(otherF, currentPieceEnd))
+                    if (currentMinimum.DoesIntersect(otherZ, p))
                     {
-                        double firstIntersection = currentF.FirstIntersect(otherF, currentPieceEnd);
+                        interSects = true;
+                        double intersectPoint = currentMinimum.FirstIntersect(otherZ, p);
+                        if (intersectPoint < pIntersect)
+                        {
+
+                            nextMinimum = otherZ;
+                            pIntersect = intersectPoint;
+                        }
+                    }
+                }
+                if (pIntersect < maxValue && !interSects)
+                {
+                    nextMinimum = GetMinimalFunction(pIntersect);
+                    interSects = true;
+                }
+                p = pIntersect;
+                currentMinimum = nextMinimum;
+            }
+            Console.WriteLine("{0}   {1}", h, String.Join(" ", keepers.Select(F => F.StartIndex)));
+            Fs[h] = keepers.ToList();
+            F GetMinimalFunction(double point)
+            {
+                F minimalFunction = null;
+                double bestValue = double.MaxValue;
+                foreach (var Z in Fs[h])
+                {
+                    double valuez = Z.ValueAtP(p);
+                    if (Z.Intervals.Last.Value.To > point && valuez < bestValue && (h - Z.StartIndex) >= UC.minUpTime)
+                    {
+                        minimalFunction = Z;
+                        bestValue = valuez;
+                    }
+                }
+                return minimalFunction;
+            }
+        }
+
+        private void OGremoveWeaklings(int h)
+        {
+            List<F> ActiveSetOfF = Fs[h];
+            bool[] flagged = FlagThoseWithTauLowerThanMinimumUpTime(h, ActiveSetOfF);
+            double lastValue = GetHighestDomain(ActiveSetOfF);
+            double p = UC.pMin;
+            int INDEX = GetIndexOfFminimalAtP(h, ActiveSetOfF, p);
+            bool interSects = true;
+            while (interSects)
+            {
+                int nextIndex = INDEX;
+                flagged[INDEX] = true;
+                interSects = false;
+                double currentPieceEnd = ActiveSetOfF[INDEX].Intervals.Last.Value.To;
+
+                for (int i = 0; i < ActiveSetOfF.Count; i++)
+                {
+                    var currentF = ActiveSetOfF[INDEX];
+                    var otherF = ActiveSetOfF[i];
+                    bool IsCandidate = (h - otherF.StartIndex) >= UC.minUpTime;
+                    if (i != INDEX && IsCandidate && currentF.DoesIntersect(otherF, p))
+                    {
+                        double firstIntersection = currentF.FirstIntersect(otherF, p);
                         interSects = true;
                         if (firstIntersection < currentPieceEnd)
                         {
@@ -186,30 +286,31 @@
                             currentPieceEnd = firstIntersection;
                         }
                     }
-                    currentIndex = nextIndex;
                 }
+                p = currentPieceEnd;
                 //if there is no intersection but there is a function F with a higher p in  domain
-                if (currentPieceEnd < lastValue && !interSects)
+                if (p < lastValue && !interSects)
                 {
+                    nextIndex = -1;
                     double bestValue = double.MaxValue;
-                    for (int i = 0; i < CurrentFs.Count; i++)
+                    for (int i = 0; i < ActiveSetOfF.Count; i++)
                     {
-                        var otherF = CurrentFs[i];
-                        double otherValue = otherF.ValueAtP(currentPieceEnd);
-                        bool IsCandidate = (t - otherF.StartIndex) >= UC.minUpTime;
-                        bool HigherPInDomain = CurrentFs[i].Intervals.Last().To > currentPieceEnd;
+                        var otherF = ActiveSetOfF[i];
+                        double otherValue = otherF.ValueAtP(p);
+                        bool IsCandidate = (h - otherF.StartIndex) >= UC.minUpTime;
+                        bool HigherPInDomain = ActiveSetOfF[i].Intervals.Last.Value.To > p;
                         if (HigherPInDomain && otherValue < bestValue && IsCandidate)
                         {
-                            currentIndex = i;
+                            nextIndex = i;
                             bestValue = otherValue;
                         }
                     }
                     interSects = true;
                 }
-
+                INDEX = nextIndex;
             }
-            RemoveFlagged(CurrentFs, flagged);
-            Fs[t] = CurrentFs;
+            RemoveFlagged(ActiveSetOfF, flagged);
+            Fs[h] = ActiveSetOfF;
         }
 
         private static double GetHighestDomain(List<F> ActiveSetOfF)
@@ -217,7 +318,7 @@
             double lastValue = double.MinValue;
             for (int i = 0; i < ActiveSetOfF.Count; i++)
             {
-                lastValue = Math.Max(lastValue, ActiveSetOfF[i].Intervals.Last().To);
+                lastValue = Math.Max(lastValue, ActiveSetOfF[i].Intervals.Last.Value.To);
             }
 
             return lastValue;
@@ -242,7 +343,7 @@
             {
                 var Z = ActiveSetOfF[i];
                 double valuez = Z.ValueAtP(p);
-                if (ActiveSetOfF[i].Intervals.Last().To > p && valuez < bbestValue && (h - Z.StartIndex) >= UC.minUpTime)
+                if (ActiveSetOfF[i].Intervals.Last.Value.To > p && valuez < bbestValue && (h - Z.StartIndex) >= UC.minUpTime)
                 {
                     INDEX = i;
                     bbestValue = valuez;
@@ -252,12 +353,12 @@
             return INDEX;
         }
 
-        private bool[] FlagThoseWithTauLowerThanMinimumUpTime(int t, List<F> currentF)
+        private bool[] FlagThoseWithTauLowerThanMinimumUpTime(int h, List<F> ListOfZ)
         {
-            bool[] flagged = new bool[currentF.Count];
-            for (int i = 0; i < currentF.Count; i++)
+            bool[] flagged = new bool[ListOfZ.Count];
+            for (int i = 0; i < ListOfZ.Count; i++)
             {
-                if ((t - currentF[i].StartIndex) >= UC.minUpTime)
+                if ((h - ListOfZ[i].StartIndex) >= UC.minUpTime)
                 {
                     flagged[i] = false;
                 }
@@ -266,12 +367,174 @@
                     flagged[i] = true;
                 }
             }
+
             return flagged;
         }
 
         public void Print(int h)
         {
             Fs[h].ForEach(z => { z.FPrint(); });
+        }
+        private void NewRemoveWeak(int h)
+        {
+            List<F> CurrentFs = Fs[h];
+            double lastValue = double.MinValue;
+            bool[] flagged = new bool[CurrentFs.Count];
+            for (int i = 0; i < CurrentFs.Count; i++)
+            {
+                flagged[i] = (h - CurrentFs[i].StartIndex) < UC.minUpTime;
+                lastValue = Math.Max(lastValue, CurrentFs[i].Intervals.Last.Value.To);
+            }
+            double p = UC.pMin;
+            int INDEX = -1;
+            double bestValue = double.MaxValue;
+            for (int i = 0; i < CurrentFs.Count; i++)
+            {
+                var Z = CurrentFs[i];
+                double valuez = Z.ValueAtP(p);
+                if (CurrentFs[i].Intervals.Last.Value.To > p && valuez < bestValue && (h - Z.StartIndex) >= UC.minUpTime)
+                {
+                    INDEX = i;
+                    bestValue = valuez;
+                }
+            }
+            bool interSects = true;
+            while (interSects)
+            {
+                int nextIndex = INDEX;
+                flagged[INDEX] = true;
+                interSects = false;
+                double pIntersect = CurrentFs[INDEX].Intervals.Last.Value.To;
+
+                for (int i = 0; i < CurrentFs.Count; i++)
+                {
+                    var Z = CurrentFs[INDEX];
+                    var otherZ = CurrentFs[i];
+                    if (i != INDEX && (h - otherZ.StartIndex) >= UC.minUpTime && Z.DoesIntersect(otherZ, p))
+                    {
+                        double intersectPoint = Z.FirstIntersect(otherZ, p);
+                        interSects = true;
+                        if (intersectPoint < pIntersect)
+                        {
+                            nextIndex = i;
+                            pIntersect = intersectPoint;
+                        }
+                    }
+                }
+                p = pIntersect;
+                if (p < lastValue && !interSects)
+                {
+                    nextIndex = -1;
+                    bestValue = double.MaxValue;
+                    for (int i = 0; i < CurrentFs.Count; i++)
+                    {
+                        var Z = CurrentFs[i];
+                        double valuez = Z.ValueAtP(p);
+                        if (CurrentFs[i].Intervals.Last.Value.To > p && valuez < bestValue && (h - Z.StartIndex) >= UC.minUpTime)
+                        {
+                            nextIndex = i;
+                            bestValue = valuez;
+                        }
+                    }
+                    interSects = true;
+                }
+                INDEX = nextIndex;
+            }
+            for (int i = CurrentFs.Count - 1; i >= 0; i--)
+            {
+                if (!flagged[i])
+                {
+                    CurrentFs.RemoveAt(i);
+                };
+            }
+            Fs[h] = CurrentFs;
+        }
+
+        // its super ugly but it works
+        private void OldRemoveWeaklings(int h)
+        {
+            List<F> ListOfZ = Fs[h];
+            double lastValue = double.MinValue;
+            bool[] flagged = new bool[ListOfZ.Count];
+            for (int i = 0; i < ListOfZ.Count; i++)
+            {
+                if ((h - ListOfZ[i].StartIndex) >= UC.minUpTime)
+                {
+                    flagged[i] = false;
+                }
+                else
+                {
+                    flagged[i] = true;
+                }
+                lastValue = Math.Max(lastValue, ListOfZ[i].Intervals.Last.Value.To);
+            }
+            double p = UC.pMin;
+            int INDEX = -1;
+            double bestValue = double.MaxValue;
+            for (int i = 0; i < ListOfZ.Count; i++)
+            {
+                var Z = ListOfZ[i];
+                double valuez = Z.ValueAtP(p);
+                if (ListOfZ[i].Intervals.Last.Value.To > p && valuez < bestValue && (h - Z.StartIndex) >= UC.minUpTime)
+                {
+                    INDEX = i;
+                    bestValue = valuez;
+                }
+            }
+            bool interSects = true;
+            while (interSects)
+            {
+                int nextIndex = INDEX;
+                flagged[INDEX] = true;
+                interSects = false;
+                double pIntersect = ListOfZ[INDEX].Intervals.Last.Value.To;
+
+                for (int i = 0; i < ListOfZ.Count; i++)
+                {
+                    var Z = ListOfZ[INDEX];
+                    var otherZ = ListOfZ[i];
+                    if (i != INDEX && (h - otherZ.StartIndex) >= UC.minUpTime)
+                    {
+                        if (Z.DoesIntersect(otherZ, p))
+                        {
+                            double intersectPoint = Z.FirstIntersect(otherZ, p);
+                            interSects = true;
+                            if (intersectPoint < pIntersect)
+                            {
+                                nextIndex = i;
+                                pIntersect = intersectPoint;
+                            }
+                        }
+
+                    }
+                }
+                p = pIntersect;
+                if (p < lastValue && !interSects)
+                {
+                    nextIndex = -1;
+                    bestValue = double.MaxValue;
+                    for (int i = 0; i < ListOfZ.Count; i++)
+                    {
+                        var Z = ListOfZ[i];
+                        double valuez = Z.ValueAtP(p);
+                        if (ListOfZ[i].Intervals.Last.Value.To > p && valuez < bestValue && (h - Z.StartIndex) >= UC.minUpTime)
+                        {
+                            nextIndex = i;
+                            bestValue = valuez;
+                        }
+                    }
+                    interSects = true;
+                }
+                INDEX = nextIndex;
+            }
+            for (int i = ListOfZ.Count - 1; i >= 0; i--)
+            {
+                if (!flagged[i])
+                {
+                    ListOfZ.RemoveAt(i);
+                };
+            }
+            Fs[h] = ListOfZ;
         }
     }
 }

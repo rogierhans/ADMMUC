@@ -14,14 +14,16 @@ namespace Tests
         {
             var filename = @"C:\Users\Rogier\Google Drive\Data\Github\" + "GA10.uc";
             int totalTime = 24;
-            var rhoUpdate = 2;
-            var rho = 0.00001;
+            var rhoUpdate = 1.01;
+            var rho = 1;
             var count = 1;
             //for (int iter = 0; iter < 3; iter++)
+
+            Console.WriteLine("TestGO");
             {
                 var PSS = new PowerSystemSolution(filename, totalTime, rho, rhoUpdate, count, 1);
                 PSS.Test1UC = true;
-                PSS.RunIterations(1000);
+                PSS.RunIterations(100);
                  PSS.Deltas.ForEach(x => Assert.IsTrue( x <= 0.001));
 
             }
@@ -39,8 +41,8 @@ namespace Tests
             {
                 var PSS = new PowerSystemSolution(filename, totalTime, rho, rhoUpdate, count, 1);
                 PSS.Test1UC = true;
-                PSS.RunIterations(10);
-                PSS.Deltas.ForEach(x => Console.WriteLine(x));
+                PSS.RunIterations(100);
+                //PSS.Deltas.ForEach(x => Console.WriteLine(x));
                PSS.Deltas.ForEach(x => Assert.IsTrue(x <= 0.001));
 
             }
@@ -58,9 +60,9 @@ namespace Tests
             {
                 var PSS = new PowerSystemSolution(filename, totalTime, rho, rhoUpdate, count, 1);
                 PSS.Test1UC = true;
-                PSS.RunIterations(10);
+                PSS.RunIterations(100);
                // PSS.Deltas.ForEach(x => Console.WriteLine(x));
-               // PSS.Deltas.ForEach(x => Assert.IsTrue(x <= 0.001));
+               PSS.Deltas.ForEach(x => Assert.IsTrue(x <= 0.001));
 
             }
         }
@@ -92,7 +94,7 @@ namespace Tests
             {
                 var PSS = new PowerSystemSolution(@"C:\Users\Rogier\Google Drive\Data\Github\" + "RTS26.uc", totalTime, 1, 1.1, count, 1);
                 PSS.Test1UC = true;
-                PSS.RunIterations(30);
+                PSS.RunIterations(100);
                  PSS.Deltas.ForEach(x => Assert.IsTrue( x <= 0.001));
 
             }
