@@ -22,13 +22,13 @@ namespace ADMMUC._1UC
         }
         private double ReevalSolution(SUC UC)
         {
-            double startCost = Steps.Skip(1).Where(step => step.On && step.Tau == 0).Sum(step => UC.startCost);
+            double startCost = Steps.Skip(1).Where(step => step.On && step.Tau == 0).Sum(step => UC.StartCost);
             double generationCost = Steps.Sum(step => (step.On ? UC.A : 0) + UC.B * step.P + UC.C * step.P * step.P);
             return startCost + generationCost;
         }
         private double ReevalSolutionLR(SUC UC)
         {
-            double startCost = Steps.Skip(1).Where(step => step.On && step.Tau == 0).Sum(step => UC.startCost);
+            double startCost = Steps.Skip(1).Where(step => step.On && step.Tau == 0).Sum(step => UC.StartCost);
             double LRGenerationCost = 0;
             for (int t = 0; t < UC.LagrangeMultipliers.Count; t++)
             {

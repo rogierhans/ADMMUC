@@ -43,7 +43,7 @@ namespace ADMMUC._1UC
                 double bestValue = double.MaxValue;
                 F bestF = Fs[T - 1].First();
                 //Console.WriteLine("T:{0}", T);
-                foreach (var F in Fs[T - 1].Where(F => ((T - 1) - F.StartIndex) >= UC.minUpTime - 1 || F.StartIndex == 0))
+                foreach (var F in Fs[T - 1].Where(F => ((T - 1) - F.StartIndex) >= UC.MinUpTime - 1 || F.StartIndex == 0))
                 {
                     foreach (var interval in F.Intervals.Where(interval => interval.NonEmptyInterval(UC.pMin, UC.SD)))
                     {
@@ -62,11 +62,11 @@ namespace ADMMUC._1UC
                 // Console.WriteLine("deze:{0} {1} {2}", bestF.StartIndex, bestValue, bestP);
                 return new DPQSolution(T - 1, (T - 1) - bestF.StartIndex, true, bestP, bestF, bestValue);
             }
-            else if (0 < Tau && Tau < UC.minDownTime - 1)
+            else if (0 < Tau && Tau < UC.MinDownTime - 1)
             {
                 return new DPQSolution(T - 1, Tau - 1, false, 0, null, Value);
             }
-            else if (Tau == UC.minDownTime - 1)
+            else if (Tau == UC.MinDownTime - 1)
             {
                 if (Off[T - 1, Tau] < Off[T - 1, Tau - 1])
                 {
@@ -87,7 +87,7 @@ namespace ADMMUC._1UC
         {
             if (Tau == 0)
             {
-                return new DPQSolution(T - 1, UC.minDownTime - 1, false, 0, null, Value);
+                return new DPQSolution(T - 1, UC.MinDownTime - 1, false, 0, null, Value);
             }
             else if (0 < Tau)
             {

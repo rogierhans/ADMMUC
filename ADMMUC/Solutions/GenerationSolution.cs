@@ -26,7 +26,7 @@ namespace ADMMUC.Solutions
             this.SGUC = SGUC;
             CurrentDispatchAtTime = new double[time];
             NodeID = nodeID;
-            G1UC = new Gurobi1UC(SGUC);
+            //G1UC = new Gurobi1UC(SGUC);
         }
         public void Print()
         {
@@ -102,7 +102,7 @@ namespace ADMMUC.Solutions
                 if (counter < 10000)
                 {
                     SGUC.Objective = gscore;
-                    SGUC.WriteToFile(@"C:\Users\Rogier\OneDrive - Universiteit Utrecht\1UCTest\FERC\" + (counter++) + ".suc");
+                    SGUC.WriteToFile(@"C:\Users\Rogier\OneDrive - Universiteit Utrecht\1UCTest\GA10\" + (counter++) + ".suc");
                 }
             }
             return Math.Abs(gscore - ADMMCost);
@@ -152,7 +152,7 @@ namespace ADMMUC.Solutions
         }
         private static double ReevalSolution(SUC UC, List<DPQSolution> solution)
         {
-            double startCost = solution.Skip(1).Where(step => step.On && step.Tau == 0).Sum(step => UC.startCost);
+            double startCost = solution.Skip(1).Where(step => step.On && step.Tau == 0).Sum(step => UC.StartCost);
             double generationCost = solution.Sum(step => (step.On ? UC.A : 0) + UC.B * step.P + UC.C * step.P * step.P);
             return startCost + generationCost;
         }

@@ -21,7 +21,7 @@ namespace Tests
                 var filename = file.FullName;
                 var suc = SUC.ReadFromFile(filename);
                 var solution = new RRF(suc, true).GetSolution();
-                 Console.WriteLine(suc.Objective);
+                Console.WriteLine(suc.Objective);
                 Assert.IsTrue(Math.Abs(solution.CostADMM - suc.Objective) <= 0.001);
             }
 
@@ -30,12 +30,13 @@ namespace Tests
         [TestMethod]
         public void FERC_1UCFileCheck()
         {
+            Console.WriteLine("hello");
             foreach (var file in new DirectoryInfo(@"C:\Users\Rogier\OneDrive - Universiteit Utrecht\1UCTest\FERC").GetFiles())
             {
                 var filename = file.FullName;
                 var suc = SUC.ReadFromFile(filename);
                 var solution = new RRF(suc, true).GetSolution();
-                 Console.WriteLine(suc.Objective);
+                Console.WriteLine(suc.Objective + " " + suc.Objective);
                 Assert.IsTrue(Math.Abs(solution.CostADMM - suc.Objective) <= 0.001);
             }
 

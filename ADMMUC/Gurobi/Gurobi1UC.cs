@@ -40,11 +40,11 @@ namespace ADMMUC.Solutions
             model.Set("MIPGap", "0.000000000001");
             model.Set("IntFeasTol", "0.000000001");
             model.Set("TimeLimit", "100");
-            P = new GRBVar[GQ.totalTime];
-            Commit = new GRBVar[GQ.totalTime];
-            Start = new GRBVar[GQ.totalTime];
-            Stop = new GRBVar[GQ.totalTime];
-            for (int t = 0; t < GQ.totalTime; t++)
+            P = new GRBVar[GQ.TotalTime];
+            Commit = new GRBVar[GQ.TotalTime];
+            Start = new GRBVar[GQ.TotalTime];
+            Stop = new GRBVar[GQ.TotalTime];
+            for (int t = 0; t < GQ.TotalTime; t++)
             {
                 P[t] = model.AddVar(double.MinValue, double.MaxValue, 0.0, GRB.CONTINUOUS, "");
                 Commit[t] = model.AddVar(0.0, 1.0, 0.0, type, "U" + t);
@@ -69,7 +69,7 @@ namespace ADMMUC.Solutions
                 }
 
             }
-            for (int t = 0; t < GQ.totalTime; t++)
+            for (int t = 0; t < GQ.TotalTime; t++)
             {
                 if (t != 0)
                 {
@@ -87,13 +87,13 @@ namespace ADMMUC.Solutions
         public (double, double, double[]) CalcOptimum()
         {
             GRBQuadExpr ob = new GRBQuadExpr();
-            for (int t = 0; t < GQ.totalTime; t++)
+            for (int t = 0; t < GQ.TotalTime; t++)
             {
-                ob += (P[t] * P[t] * (GQ.CM[t] + GQ.C)) + Commit[t] * GQ.A + (Start[t] * GQ.startCost) + (P[t] * ((GQ.B + GQ.BM[t]) - GQ.LagrangeMultipliers[t]));
+                ob += (P[t] * P[t] * (GQ.CM[t] + GQ.C)) + Commit[t] * GQ.A + (Start[t] * GQ.StartCost) + (P[t] * ((GQ.B + GQ.BM[t]) - GQ.LagrangeMultipliers[t]));
             }
             model.SetObjective(ob, GRB.MINIMIZE);
             model.Optimize();
-            double returnvalue = ob.Value - GQ.totalTime;
+            double returnvalue = ob.Value - GQ.TotalTime;
             return (returnvalue, ReevalSolution(), P.Select(x => x.X).ToArray());
         }
 
@@ -101,9 +101,9 @@ namespace ADMMUC.Solutions
         private double ReevalSolution()
         {
 
-            double CycleCost = Start.Skip(1).Sum(step => step.X * GQ.startCost);
+            double CycleCost = Start.Skip(1).Sum(step => step.X * GQ.StartCost);
             double generationCost = 0;
-            for (int t = 0; t < GQ.totalTime; t++)
+            for (int t = 0; t < GQ.TotalTime; t++)
             {
                 generationCost += Commit[t].X * GQ.A + GQ.B * P[t].X + P[t].X * P[t].X * GQ.C;
             }
@@ -111,10 +111,10 @@ namespace ADMMUC.Solutions
         }
         private void AddMinimumUpTime()
         {
-            for (int t = 0; t < GQ.totalTime; t++)
+            for (int t = 0; t < GQ.TotalTime; t++)
             {
                 var amountOfTimeStartedInPeriod = new GRBLinExpr();
-                for (int t2 = Math.Max(0, (t + 1) - GQ.minUpTime); t2 <= t; t2++)
+                for (int t2 = Math.Max(0, (t + 1) - GQ.MinUpTime); t2 <= t; t2++)
                 {
                     amountOfTimeStartedInPeriod += Start[t2];
                 }
@@ -124,11 +124,11 @@ namespace ADMMUC.Solutions
 
         private void AddMinimumDownTime()
         {
-            for (int t = 0; t < GQ.totalTime; t++)
+            for (int t = 0; t < GQ.TotalTime; t++)
             {
 
                 var amountOfTimeStopped = new GRBLinExpr();
-                for (int t2 = Math.Max(0, (t + 1) - GQ.minDownTime); t2 <= t; t2++)
+                for (int t2 = Math.Max(0, (t + 1) - GQ.MinDownTime); t2 <= t; t2++)
                 {
                     amountOfTimeStopped += Stop[t2];
                 }

@@ -29,7 +29,7 @@ namespace ADMMUC._1UC
             double bestP = 0;
             F bestF = null;
 
-            for (int tau = 0; tau < UC.minDownTime; tau++)
+            for (int tau = 0; tau < UC.MinDownTime; tau++)
             {
                 double value = stop[t, tau];
                 if (value <= bestValue)
@@ -96,8 +96,8 @@ namespace ADMMUC._1UC
 
         public void FillInDP()
         {
-            stop = new double[UC.LagrangeMultipliers.Count, UC.minDownTime];
-            for (int tau = 0; tau < UC.minDownTime; tau++)
+            stop = new double[UC.LagrangeMultipliers.Count, UC.MinDownTime];
+            for (int tau = 0; tau < UC.MinDownTime; tau++)
             {
                 stop[0, tau] = 0;
             }
@@ -106,17 +106,17 @@ namespace ADMMUC._1UC
             {
                 Fs[z] = new List<F>();
             }
-            AddNew(0, UC.startCost);
-            for (int h = 1; h < UC.totalTime; h++)
+            AddNew(0, UC.StartCost);
+            for (int h = 1; h < UC.TotalTime; h++)
             {
-                stop[h, UC.minDownTime - 1] = Math.Min(stop[h - 1, UC.minDownTime - 2], stop[h - 1, UC.minDownTime - 1]);
-                for (int t = 1; t < UC.minDownTime - 1; t++)
+                stop[h, UC.MinDownTime - 1] = Math.Min(stop[h - 1, UC.MinDownTime - 2], stop[h - 1, UC.MinDownTime - 1]);
+                for (int t = 1; t < UC.MinDownTime - 1; t++)
                 {
                     stop[h, t] = stop[h - 1, t - 1];
                 }
                 stop[h, 0] = GetBestStop(h);
                 Update(h);
-                var bestStart = Math.Min(UC.startCost, UC.startCost + stop[h - 1, UC.minDownTime - 1]);
+                var bestStart = Math.Min(UC.StartCost, UC.StartCost + stop[h - 1, UC.MinDownTime - 1]);
                 AddNew(h, bestStart);
 
 
@@ -126,7 +126,7 @@ namespace ADMMUC._1UC
         {
             //FillInDP();
             double bestValue = 0;
-            for (int tau = 0; tau < UC.minDownTime; tau++)
+            for (int tau = 0; tau < UC.MinDownTime; tau++)
             {
                 bestValue = Math.Min(bestValue, stop[UC.LagrangeMultipliers.Count - 1, tau]);
             }
@@ -139,7 +139,7 @@ namespace ADMMUC._1UC
             //h-1???
             foreach (var Z in Fs[h - 1])
             {
-                if (h - Z.StartIndex >= UC.minUpTime || Z.StartIndex == 0)
+                if (h - Z.StartIndex >= UC.MinUpTime || Z.StartIndex == 0)
                 {
                     bestStop = Math.Min(Z.BestEnd(), bestStop);
                 }
@@ -162,7 +162,7 @@ namespace ADMMUC._1UC
                 Z.NextPoints(h);
                 Z.IncreasePoints(h);
             }
-            if (h > UC.minUpTime && Reduction)
+            if (h > UC.MinUpTime && Reduction)
             {
                 OGremoveWeaklings(h);
                 //AltRemoveWeaklings(h);
@@ -199,7 +199,7 @@ namespace ADMMUC._1UC
         {
             HashSet<F> keepers = new HashSet<F>();
             double maxValue = Fs[h].Max(Z => Z.Intervals.Last.Value.To);
-            foreach (var Z in Fs[h].Where(Z => (h - Z.StartIndex) < UC.minUpTime))
+            foreach (var Z in Fs[h].Where(Z => (h - Z.StartIndex) < UC.MinUpTime))
             {
                 //Console.WriteLine("{0} {1} {2}<{3}", h, Z.StartIndex, h - Z.StartIndex, UC.minDownTime);
                 //Console.ReadLine();
@@ -214,7 +214,7 @@ namespace ADMMUC._1UC
                 keepers.Add(currentMinimum);
                 interSects = false;
                 double pIntersect = currentMinimum.Intervals.Last.Value.To;
-                foreach (var otherZ in Fs[h].Where(otherZ => currentMinimum != otherZ && (h - otherZ.StartIndex) >= UC.minUpTime))
+                foreach (var otherZ in Fs[h].Where(otherZ => currentMinimum != otherZ && (h - otherZ.StartIndex) >= UC.MinUpTime))
                 {
                     if (currentMinimum.DoesIntersect(otherZ, p))
                     {
@@ -245,7 +245,7 @@ namespace ADMMUC._1UC
                 foreach (var Z in Fs[h])
                 {
                     double valuez = Z.ValueAtP(p);
-                    if (Z.Intervals.Last.Value.To > point && valuez < bestValue && (h - Z.StartIndex) >= UC.minUpTime)
+                    if (Z.Intervals.Last.Value.To > point && valuez < bestValue && (h - Z.StartIndex) >= UC.MinUpTime)
                     {
                         minimalFunction = Z;
                         bestValue = valuez;
@@ -274,7 +274,7 @@ namespace ADMMUC._1UC
                 {
                     var currentF = ActiveSetOfF[INDEX];
                     var otherF = ActiveSetOfF[i];
-                    bool IsCandidate = (h - otherF.StartIndex) >= UC.minUpTime;
+                    bool IsCandidate = (h - otherF.StartIndex) >= UC.MinUpTime;
                     if (i != INDEX && IsCandidate && currentF.DoesIntersect(otherF, p))
                     {
                         double firstIntersection = currentF.FirstIntersect(otherF, p);
@@ -296,7 +296,7 @@ namespace ADMMUC._1UC
                     {
                         var otherF = ActiveSetOfF[i];
                         double otherValue = otherF.ValueAtP(p);
-                        bool IsCandidate = (h - otherF.StartIndex) >= UC.minUpTime;
+                        bool IsCandidate = (h - otherF.StartIndex) >= UC.MinUpTime;
                         bool HigherPInDomain = ActiveSetOfF[i].Intervals.Last.Value.To > p;
                         if (HigherPInDomain && otherValue < bestValue && IsCandidate)
                         {
@@ -342,7 +342,7 @@ namespace ADMMUC._1UC
             {
                 var Z = ActiveSetOfF[i];
                 double valuez = Z.ValueAtP(p);
-                if (ActiveSetOfF[i].Intervals.Last.Value.To > p && valuez < bbestValue && (h - Z.StartIndex) >= UC.minUpTime)
+                if (ActiveSetOfF[i].Intervals.Last.Value.To > p && valuez < bbestValue && (h - Z.StartIndex) >= UC.MinUpTime)
                 {
                     INDEX = i;
                     bbestValue = valuez;
@@ -357,7 +357,7 @@ namespace ADMMUC._1UC
             bool[] flagged = new bool[ListOfZ.Count];
             for (int i = 0; i < ListOfZ.Count; i++)
             {
-                if ((h - ListOfZ[i].StartIndex) >= UC.minUpTime)
+                if ((h - ListOfZ[i].StartIndex) >= UC.MinUpTime)
                 {
                     flagged[i] = false;
                 }
@@ -381,7 +381,7 @@ namespace ADMMUC._1UC
             bool[] flagged = new bool[CurrentFs.Count];
             for (int i = 0; i < CurrentFs.Count; i++)
             {
-                flagged[i] = (h - CurrentFs[i].StartIndex) < UC.minUpTime;
+                flagged[i] = (h - CurrentFs[i].StartIndex) < UC.MinUpTime;
                 lastValue = Math.Max(lastValue, CurrentFs[i].Intervals.Last.Value.To);
             }
             double p = UC.pMin;
@@ -391,7 +391,7 @@ namespace ADMMUC._1UC
             {
                 var Z = CurrentFs[i];
                 double valuez = Z.ValueAtP(p);
-                if (CurrentFs[i].Intervals.Last.Value.To > p && valuez < bestValue && (h - Z.StartIndex) >= UC.minUpTime)
+                if (CurrentFs[i].Intervals.Last.Value.To > p && valuez < bestValue && (h - Z.StartIndex) >= UC.MinUpTime)
                 {
                     INDEX = i;
                     bestValue = valuez;
@@ -409,7 +409,7 @@ namespace ADMMUC._1UC
                 {
                     var Z = CurrentFs[INDEX];
                     var otherZ = CurrentFs[i];
-                    if (i != INDEX && (h - otherZ.StartIndex) >= UC.minUpTime && Z.DoesIntersect(otherZ, p))
+                    if (i != INDEX && (h - otherZ.StartIndex) >= UC.MinUpTime && Z.DoesIntersect(otherZ, p))
                     {
                         double intersectPoint = Z.FirstIntersect(otherZ, p);
                         interSects = true;
@@ -429,7 +429,7 @@ namespace ADMMUC._1UC
                     {
                         var Z = CurrentFs[i];
                         double valuez = Z.ValueAtP(p);
-                        if (CurrentFs[i].Intervals.Last.Value.To > p && valuez < bestValue && (h - Z.StartIndex) >= UC.minUpTime)
+                        if (CurrentFs[i].Intervals.Last.Value.To > p && valuez < bestValue && (h - Z.StartIndex) >= UC.MinUpTime)
                         {
                             nextIndex = i;
                             bestValue = valuez;
@@ -457,7 +457,7 @@ namespace ADMMUC._1UC
             bool[] flagged = new bool[ListOfZ.Count];
             for (int i = 0; i < ListOfZ.Count; i++)
             {
-                if ((h - ListOfZ[i].StartIndex) >= UC.minUpTime)
+                if ((h - ListOfZ[i].StartIndex) >= UC.MinUpTime)
                 {
                     flagged[i] = false;
                 }
@@ -474,7 +474,7 @@ namespace ADMMUC._1UC
             {
                 var Z = ListOfZ[i];
                 double valuez = Z.ValueAtP(p);
-                if (ListOfZ[i].Intervals.Last.Value.To > p && valuez < bestValue && (h - Z.StartIndex) >= UC.minUpTime)
+                if (ListOfZ[i].Intervals.Last.Value.To > p && valuez < bestValue && (h - Z.StartIndex) >= UC.MinUpTime)
                 {
                     INDEX = i;
                     bestValue = valuez;
@@ -492,7 +492,7 @@ namespace ADMMUC._1UC
                 {
                     var Z = ListOfZ[INDEX];
                     var otherZ = ListOfZ[i];
-                    if (i != INDEX && (h - otherZ.StartIndex) >= UC.minUpTime)
+                    if (i != INDEX && (h - otherZ.StartIndex) >= UC.MinUpTime)
                     {
                         if (Z.DoesIntersect(otherZ, p))
                         {
@@ -516,7 +516,7 @@ namespace ADMMUC._1UC
                     {
                         var Z = ListOfZ[i];
                         double valuez = Z.ValueAtP(p);
-                        if (ListOfZ[i].Intervals.Last.Value.To > p && valuez < bestValue && (h - Z.StartIndex) >= UC.minUpTime)
+                        if (ListOfZ[i].Intervals.Last.Value.To > p && valuez < bestValue && (h - Z.StartIndex) >= UC.MinUpTime)
                         {
                             nextIndex = i;
                             bestValue = valuez;
