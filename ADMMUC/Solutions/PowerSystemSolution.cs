@@ -44,7 +44,7 @@ namespace ADMMUC.Solutions
             this.multiplierMultiplier = multiplierMultiplier;
 
             SetMultipliers();
-            CreateGenerationSolution(totalTime);
+            CreateGenerationSolution(totalTime,fileName.Split('\\').Last().Split('.').First());
             TSolution = new ADMMTrans(PowerSystem, totalTime);
             CreateResSolutions(totalTime);
             //  Resolve = new ResolveTrans(PowerSystem, totalTime, true, false);
@@ -166,7 +166,7 @@ namespace ADMMUC.Solutions
             }
         }
 
-        protected void CreateGenerationSolution(int totalTime)
+        protected void CreateGenerationSolution(int totalTime, string name)
         {
             GSolutions = new GenerationSolution[totalUnits + totalNodes];
             for (int u = 0; u < totalUnits; u++)
@@ -189,7 +189,7 @@ namespace ADMMUC.Solutions
                 {
                     var SGU = new SUC(unit.A, unit.B, unit.C, unit.StartCostInterval.First(), pMax, pMin, RU, RD, MinUp, minDownTime, SU, SD, totalTime);
                     // SGU.Unit = unit;
-                    GSolutions[u] = new GenerationSolution(SGU, totalTime, PowerSystem.Nodes.First(node => node.UnitsIndex.Contains(u)).ID);
+                    GSolutions[u] = new GenerationSolution(SGU, totalTime, PowerSystem.Nodes.First(node => node.UnitsIndex.Contains(u)).ID, name);
                     // SGU.CreateEnv(GLOBAL.RelaxGurobi);
                 }
             }
@@ -198,7 +198,7 @@ namespace ADMMUC.Solutions
                 int index = totalUnits + n;
                 var max = 10000;
                 var UC = new SUC(0, 10000, 0, 0, max, 0, max, max, 2, 2, max, max, totalTime);
-                GSolutions[index] = new GenerationSolution(UC, totalTime, n);
+                GSolutions[index] = new GenerationSolution(UC, totalTime, n, name);
                 PowerSystem.Nodes[n].UnitsIndex.Add(index);
                 //UC.CreateEnv(GLOBAL.RelaxGurobi);
             }

@@ -40,12 +40,10 @@ namespace Tests
             var rhoUpdate = 1.01;
             var rho = 1;
             var count = 1;
-            //for (int iter = 0; iter < 3; iter++)
             {
                 var PSS = new PowerSystemSolution(filename, totalTime, rho, rhoUpdate, count, 1);
                 PSS.Test1UC = true;
                 PSS.RunIterations(100);
-                //PSS.Deltas.ForEach(x => Console.WriteLine(x));
                 PSS.Deltas.ForEach(x => Assert.IsTrue(x <= 0.001));
 
             }
@@ -59,7 +57,6 @@ namespace Tests
             var rhoUpdate = 1.01;
             var rho = 1;
             var count = 1;
-            //for (int iter = 0; iter < 3; iter++)
             {
                 var PSS = new PowerSystemSolution(filename, totalTime, rho, rhoUpdate, count, 1);
                 PSS.Test1UC = true;
@@ -84,7 +81,7 @@ namespace Tests
 
                 PSS.RunIterations(10000);
                 Console.WriteLine(PSS.FinalScore);
-                Assert.IsTrue(PSS.FinalScore < 569000);
+                Assert.IsTrue(PSS.FinalScore < 568000);
             }
         }
 

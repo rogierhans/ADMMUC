@@ -31,7 +31,7 @@ namespace Tests
         public void FERC_1UCFileCheck()
         {
             Console.WriteLine("hello");
-            foreach (var file in new DirectoryInfo(@"C:\Users\Rogier\OneDrive - Universiteit Utrecht\1UCTest\FERC").GetFiles())
+            foreach (var file in new DirectoryInfo(@"C:\Users\Rogier\OneDrive - Universiteit Utrecht\1UCTest\FERC923").GetFiles())
             {
                 var filename = file.FullName;
                 var suc = SUC.ReadFromFile(filename);

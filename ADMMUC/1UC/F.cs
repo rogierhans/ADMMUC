@@ -5,27 +5,31 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Runtime.CompilerServices;
 
 namespace ADMMUC._1UC
 {
     public class F
     {
         SUC UC;
-        public LinkedList<QuadraticInterval> Intervals = new LinkedList<QuadraticInterval>();
+        public List<QuadraticInterval> Intervals = new List<QuadraticInterval>();
         public int StartIndex = 0;
         //public LinkedListNode<QuadraticInterval> OldOptimum;
 
-        public F(F ZPQuadratic)
+        public F(F other)
         {
-            StartIndex = ZPQuadratic.StartIndex;
-            UC = ZPQuadratic.UC;
-            var node = ZPQuadratic.Intervals.First;
-            while (node != null)
+            StartIndex = other.StartIndex;
+            UC = other.UC;
+
+            Intervals.Add(other.Intervals[0].Copy());
+            for (int i = 1; i < other.Intervals.Count; i++)
             {
-                Intervals.AddLast(node.Value.Copy());
-                node = node.Next;
+                var interval = other.Intervals[i];
+                if (interval.From != interval.To)
+                {
+                    Intervals.Add(interval.Copy());
+                }
             }
-            //OldOptimum = ZPQuadratic.OldOptimum;
         }
         public F(SUC uc, int startIndex, double startCost)
         {
@@ -33,11 +37,11 @@ namespace ADMMUC._1UC
             StartIndex = startIndex;
             if (startIndex == 0)
             {
-                Intervals.AddFirst(new QuadraticInterval(UC.pMin, UC.pMax, 0, 0, 0, StartIndex));
+                Intervals.Add(new QuadraticInterval(UC.pMin, UC.pMax, 0, 0, 0, StartIndex));
             }
             else
             {
-                Intervals.AddFirst(new QuadraticInterval(UC.pMin, UC.SU, startCost, 0, 0, StartIndex));
+                Intervals.Add(new QuadraticInterval(UC.pMin, UC.SU, startCost, 0, 0, StartIndex));
             }
             IncreasePoints(startIndex);
         }
@@ -48,149 +52,92 @@ namespace ADMMUC._1UC
             return Intervals.Min(i => i.ValueMinimum());
         }
 
-        public QuadraticInterval GetFirst()
-        {
-            return Intervals.First.Value;
-        }
-
         public void NextPoints(int h)
         {
-            var OptimalNode = GetOptimalNode();
-            var bestInterval = OptimalNode.Value;
-
-            double From = bestInterval.From;
+            int Index = GetOptimalNode();
+            var bestInterval = Intervals[Index];
             double pStar = bestInterval.MinimumAtInterval();
             double To = bestInterval.To;
-            //Console.WriteLine("{0} {1} {2}", From, pStar, To);
-            LinkedListNode<QuadraticInterval> LeftNode = OptimalNode;
-            OptimalNode.Value.To = pStar;
+            bestInterval.To = pStar;
             var midInterval = new QuadraticInterval(Math.Max(pStar - UC.RampDown, UC.pMin), Math.Min(pStar + UC.RampUp, UC.pMax), bestInterval.ValueMinimum(), 0, 0, StartIndex);
-            LinkedListNode<QuadraticInterval> Middle = Intervals.AddAfter(OptimalNode, midInterval);
+            Intervals.Insert(Index + 1, midInterval);
             var rightInterval = bestInterval.Copy();
             rightInterval.From = pStar;
             rightInterval.To = To;
-            LinkedListNode<QuadraticInterval> RightNode = Intervals.AddAfter(Middle, rightInterval);
-            //Print();
-            if (From == pStar)
-            {
-                Intervals.Remove(LeftNode);
-                ShiftLeft(Middle.Previous);
-                ShiftRight(RightNode);
-            }
-            else if (pStar == To)
-            {
-                Intervals.Remove(RightNode);
-                ShiftLeft(LeftNode);
-                ShiftRight(Middle.Next);
-            }
-            else
-            {
-                ShiftLeft(LeftNode);
-                ShiftRight(RightNode);
-            }
-            //Print();
-            // OldOptimum = Middle;
+            Intervals.Insert(Index + 2, rightInterval);
+            ShiftLeft(Index);
+            ShiftRight(Index + 2);
             Trim();
         }
 
 
-        private LinkedListNode<QuadraticInterval> GetOptimalNode()
+        private int GetOptimalNode()
 
         {
-            var currentbest = Intervals.First;
-            var min = currentbest.Value.MinimumHack();
-            if (min < currentbest.Value.From)
+            int INDEX = 0;
+            var min = Intervals[INDEX].MinimumHack();
+            while (min > Intervals[INDEX].To && INDEX < Intervals.Count - 1)
             {
-                while (min < currentbest.Value.From && currentbest.Previous != null)
-                {
-                    currentbest = currentbest.Previous;
-                    min = currentbest.Value.MinimumHack();
-                }
-                return currentbest;
-            }
-            else if (min > currentbest.Value.To)
-            {
-
-                while (min > currentbest.Value.To && currentbest.Next != null)
-                {
-                    currentbest = currentbest.Next;
-                    min = currentbest.Value.MinimumHack();
-                }
-                return currentbest;
-            }
-            else
-            {
-                return currentbest;
+                INDEX++;
+                min = Intervals[INDEX].MinimumHack();
             }
 
+            return INDEX;
         }
 
 
-        public void ShiftLeft(LinkedListNode<QuadraticInterval> node)
+
+        public void ShiftLeft(int index)
         {
-            while (node != null)
+            for (int i = 0; i <= index; i++)
             {
-                var interval = node.Value;
+
+                var interval = Intervals[i];
                 interval.From = Math.Max(UC.pMin, interval.From - UC.RampDown);
                 interval.To = Math.Max(UC.pMin, interval.To - UC.RampDown);
                 interval.A = interval.A + UC.RampDown * interval.B + UC.RampDown * UC.RampDown * interval.C;
                 interval.B = interval.B + UC.RampDown * interval.C * 2;
-                node = node.Previous;
             }
         }
 
 
 
-        public void ShiftRight(LinkedListNode<QuadraticInterval> node)
+        public void ShiftRight(int index)
         {
-            while (node != null)
+            for (int i = index; i < Intervals.Count; i++)
             {
-                var interval = node.Value;
+                var interval = Intervals[i];
                 interval.From = Math.Min(UC.pMax, interval.From + UC.RampUp);
                 interval.To = Math.Min(UC.pMax, interval.To + UC.RampUp);
                 interval.A = interval.A - UC.RampUp * interval.B + UC.RampUp * UC.RampUp * interval.C;
                 interval.B = interval.B - (UC.RampUp * 2 * interval.C);
-                node = node.Next;
             }
-
         }
         public void Trim()
         {
-            // Console.WriteLine(UC);
-            var first = Intervals.First;
-            while (first.Value.To == first.Value.From)
+            var first = Intervals.First();
+            while (first.From == first.To)
             {
-                first = first.Next;
-                Intervals.RemoveFirst();
+                Intervals.RemoveAt(0);
+                first = Intervals.First();
             }
-            var last = Intervals.Last;
-            while (last.Value.To == last.Value.From)
+            var last = Intervals.Last();
+            while (last.From == last.To)
             {
-                last = last.Previous;
-                Intervals.RemoveLast();
-            }
-
-        }
-
-        public void IncreasePoints(int h)
-        {
-            LinkedListNode<QuadraticInterval> node = Intervals.First;
-            while (node != null)
-            {
-                node.Value.A += UC.A;
-                node.Value.B += -UC.LagrangeMultipliers[h] + UC.B + UC.BM[h];
-                node.Value.C += UC.C + UC.CM[h];
-                node = node.Next;
+                Intervals.RemoveAt(Intervals.Count - 1);
+                last = Intervals.Last();
             }
         }
 
-        public double ValueAtP(int h, double p)
+
+        public void IncreasePoints(int t)
         {
-            double value =
-            UC.A +
-            p * (-UC.LagrangeMultipliers[h] + UC.B) +
-            p * p * UC.C;
-            return value;
+            foreach (var interval in Intervals)
+            {
+                interval.A += UC.A;
+                interval.B += -UC.LagrangeMultipliers[t] + UC.B + UC.BM[t];
+                interval.C += UC.C + UC.CM[t];
+            }
         }
 
         internal double BestEnd()
@@ -202,9 +149,21 @@ namespace ADMMUC._1UC
                 {
                     bestValue = Math.Min(bestValue, interval.ValueMinimumRestriced(UC.SD));
                 }
+                else return bestValue;
             }
             return bestValue;
         }
+
+        public double ValueAtP(int h, double p)
+        {
+            double value =
+            UC.A +
+            p * (-UC.LagrangeMultipliers[h] + UC.B) +
+            p * p * UC.C;
+            return value;
+        }
+
+
 
         public void Print()
         {
@@ -223,17 +182,6 @@ namespace ADMMUC._1UC
         }
 
 
-        public void FPrint()
-        {
-            string line = "ID:" + Intervals.First.Value.ZID;
-            foreach (var interval in Intervals)
-            {
-                line += "\t(" + Math.Round(interval.A) + "," + Math.Round(interval.B) + "," + interval.C + ")[" + Math.Round(interval.From) + "," + Math.Round(interval.To) + "]";
-            }
-            Console.WriteLine(line);
-        }
-
-
         public List<QuadraticInterval> GetIntervals()
         {
             return Intervals.Select(i => i.Copy()).ToList();
@@ -241,13 +189,11 @@ namespace ADMMUC._1UC
 
         public double ValueAtP(double p)
         {
-            LinkedListNode<QuadraticInterval> node = Intervals.First;
-            while (node != null)
+
+            foreach (var interval in Intervals)
             {
-                var interval = node.Value;
                 if (interval.From <= p && p <= interval.To)
                     return interval.GetValue(p);
-                node = node.Next;
             }
             return double.MaxValue;
         }
@@ -270,12 +216,12 @@ namespace ADMMUC._1UC
 
         public double FirstIntersect(F otherZP, double p)
         {
-            LinkedListNode<QuadraticInterval> node = Intervals.First;
-            LinkedListNode<QuadraticInterval> otherNode = otherZP.Intervals.First;
-            while (node != null && otherNode != null)
+            int counter = 0;
+            int otherCoutner = 0;   
+            while (counter< Intervals.Count  && otherCoutner < otherZP.Intervals.Count)
             {
-                var interval = node.Value;
-                var otherInterval = otherNode.Value;
+                var interval = Intervals[counter];
+                var otherInterval = otherZP.Intervals[otherCoutner];
                 double iFrom = Math.Max(interval.From, otherInterval.From);
                 double iTo = Math.Min(interval.To, otherInterval.To);
 
@@ -287,23 +233,23 @@ namespace ADMMUC._1UC
 
                 if (interval.To < otherInterval.To)
                 {
-                    node = node.Next;
+                    counter++;
                 }
                 else
                 {
-                    otherNode = otherNode.Next;
+                    otherCoutner++;
                 }
             }
             return double.MaxValue;
         }
         public bool DoesIntersect(F otherZP, double p)
         {
-            LinkedListNode<QuadraticInterval> node = Intervals.First;
-            LinkedListNode<QuadraticInterval> otherNode = otherZP.Intervals.First;
-            while (node != null && otherNode != null)
+            int counter = 0;
+            int otherCoutner = 0;
+            while (counter < Intervals.Count && otherCoutner < otherZP.Intervals.Count)
             {
-                var interval = node.Value;
-                var otherInterval = otherNode.Value;
+                var interval = Intervals[counter];
+                var otherInterval = otherZP.Intervals[otherCoutner];
                 double iFrom = Math.Max(interval.From, otherInterval.From);
                 double iTo = Math.Min(interval.To, otherInterval.To);
                 if (interval.IntersectInIntervalBool(iFrom, iTo, otherInterval, p))
@@ -313,11 +259,11 @@ namespace ADMMUC._1UC
 
                 if (interval.To < otherInterval.To)
                 {
-                    node = node.Next;
+                    counter++;
                 }
                 else
                 {
-                    otherNode = otherNode.Next;
+                    otherCoutner++;
                 }
             }
             return false;

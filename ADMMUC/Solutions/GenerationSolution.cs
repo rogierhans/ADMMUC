@@ -21,12 +21,15 @@ namespace ADMMUC.Solutions
         public SUCSolution OldSolution;
         // readonly bool DebugCheck = true;
         private Gurobi1UC G1UC;
-        public GenerationSolution(SUC SGUC, int time, int nodeID)
+
+        private string Name;
+        public GenerationSolution(SUC SGUC, int time, int nodeID, string name)
         {
             this.SGUC = SGUC;
             CurrentDispatchAtTime = new double[time];
             NodeID = nodeID;
-            //G1UC = new Gurobi1UC(SGUC);
+            Name = name;
+            G1UC = new Gurobi1UC(SGUC);
         }
         public void Print()
         {
@@ -101,8 +104,13 @@ namespace ADMMUC.Solutions
             {
                 if (counter < 10000)
                 {
+                    if (!Directory.Exists(@"C:\Users\Rogier\OneDrive - Universiteit Utrecht\1UCTest\" + Name + @"\"))
+                    {
+                        // Try to create the directory.
+                        DirectoryInfo di = Directory.CreateDirectory(@"C:\Users\Rogier\OneDrive - Universiteit Utrecht\1UCTest\" + Name + @"\");
+                    }
                     SGUC.Objective = gscore;
-                    SGUC.WriteToFile(@"C:\Users\Rogier\OneDrive - Universiteit Utrecht\1UCTest\GA10\" + (counter++) + ".suc");
+                    SGUC.WriteToFile(@"C:\Users\Rogier\OneDrive - Universiteit Utrecht\1UCTest\"+ Name + @"\" + (counter++) + ".suc");
                 }
             }
             return Math.Abs(gscore - ADMMCost);

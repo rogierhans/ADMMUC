@@ -311,7 +311,7 @@ namespace ADMMUC.Solutions
                 {
                     var SGU = new SUC(unit.A, unit.B, unit.C, unit.StartCostInterval.First(), pMax, pMin, RU, RD, MinUp, minDownTime, SU, SD, totalTime);
                  //   SGU.Unit = unit;
-                    GSolutions[u] = new GenerationSolution(SGU, totalTime, PowerSystem.Nodes.First(node => node.UnitsIndex.Contains(u)).ID);
+                    GSolutions[u] = new GenerationSolution(SGU, totalTime, PowerSystem.Nodes.First(node => node.UnitsIndex.Contains(u)).ID , "NoName");
 
                    // SGU.CreateEnv(GLOBAL.RelaxGurobi);
                 }
@@ -323,7 +323,7 @@ namespace ADMMUC.Solutions
                 var max = 10000;
                 var UC = new SUC(0, 10000, 0, 0, max, 0, max, max, 2, 2, max, max, totalTime);
                 Console.WriteLine(index);
-                GSolutions[index] = new GenerationSolution(UC, totalTime,  n);
+                GSolutions[index] = new GenerationSolution(UC, totalTime, n, "NoName");
                 Console.WriteLine();
                 Console.Write(PowerSystem.Nodes.Count);
                 Console.WriteLine();
