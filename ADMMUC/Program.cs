@@ -16,7 +16,18 @@ class Program
 {
     static void Main()
     {
-
+        //{
+        //    foreach (var file in new DirectoryInfo(@"C:\Users\Rogier\OneDrive - Universiteit Utrecht\1UCTest\GA10").GetFiles())
+        //    {
+        //        var filename = file.FullName;
+        //        var suc = SUC.ReadFromFile(filename);
+        //        var solution = new RRF(suc, true).GetSolution();
+        //        F.ccounter = 0;
+        //     //   Console.WriteLine(suc.Objective);
+        //        ///Console.ReadLine();
+        //    }
+        //    Console.ReadLine();
+        //}
         {
             var filename = @"C:\Users\Rogier\Google Drive\Data\Github\" + "GA10.uc";
 

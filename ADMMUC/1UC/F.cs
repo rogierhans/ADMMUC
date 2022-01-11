@@ -70,21 +70,31 @@ namespace ADMMUC._1UC
             Trim();
         }
 
+        //even this function is not 100%
+        //private int GetOptimalNode()
 
+        //{
+        //    int INDEX = 0;
+        //    var min = Intervals[INDEX].MinimumHack();
+        //    while (min > Intervals[INDEX].To && INDEX < Intervals.Count - 1)
+        //    {
+        //        INDEX++;
+        //        min = Intervals[INDEX].MinimumHack();
+        //    }
+
+        //    return INDEX;
+        //}
+
+        //only works when C>0
         private int GetOptimalNode()
-
         {
             int INDEX = 0;
-            var min = Intervals[INDEX].MinimumHack();
-            while (min > Intervals[INDEX].To && INDEX < Intervals.Count - 1)
+            while (-Intervals[INDEX].B > Intervals[INDEX].To * 2 * Intervals[INDEX].C && INDEX < Intervals.Count - 1)
             {
                 INDEX++;
-                min = Intervals[INDEX].MinimumHack();
             }
-
             return INDEX;
         }
-
 
 
         public void ShiftLeft(int index)
@@ -120,7 +130,7 @@ namespace ADMMUC._1UC
             {
                 Intervals.RemoveAt(0);
             }
-            while (Intervals[Intervals.Count - 1].From == Intervals[Intervals.Count - 1].To)
+            while (Intervals[^1].From == Intervals[^1].To)
             {
                 Intervals.RemoveAt(Intervals.Count - 1);
             }
@@ -210,9 +220,11 @@ namespace ADMMUC._1UC
                 }
             }
         }
+       public static int ccounter = 0;
 
-        public double FirstIntersect(F otherZP, double p)
+        public (bool,double) FirstIntersect(F otherZP, double p)
         {
+            //Console.WriteLine(ccounter++);
             int counter = 0;
             int otherCoutner = 0;   
             while (counter< Intervals.Count  && otherCoutner < otherZP.Intervals.Count)
@@ -222,10 +234,10 @@ namespace ADMMUC._1UC
                 double iFrom = Math.Max(interval.From, otherInterval.From);
                 double iTo = Math.Min(interval.To, otherInterval.To);
 
-                var tuple = interval.IntersectInIntervalCombined(iFrom, iTo, otherInterval, p);
-                if (tuple.Item1)
+                var (suc,point) = interval.IntersectInIntervalCombined(iFrom, iTo, otherInterval, p);
+                if (suc)
                 {
-                    return tuple.Item2;
+                    return (suc,point);
                 }
 
                 if (interval.To < otherInterval.To)
@@ -237,7 +249,7 @@ namespace ADMMUC._1UC
                     otherCoutner++;
                 }
             }
-            return double.MaxValue;
+            return (false,double.MaxValue);
         }
         public bool DoesIntersect(F otherZP, double p)
         {

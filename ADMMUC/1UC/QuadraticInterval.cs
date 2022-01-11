@@ -59,90 +59,22 @@ namespace ADMMUC._1UC
             throw new Exception("STOP LEL");
         }
 
-        public double Minimum()
-        {
-            if (C == 0)
-            {
-                if (B > 0)
-                {
-                    return From;
-                }
-                else
-                {
-                    return To;
-                }
-            }
-            return (-B / (2 * C));
 
-        }
-        public double MinimumHack()
-        {
-            if (C == 0)
-            {
-                if (B > 0)
-                {
-                    return double.MinValue;
-                }
-                else if (B == 0)
-                {
-                    return From;
-                }
-                else
-                {
-                    return double.MaxValue;
-                }
-            }
-            return (-B / (2 * C));
-
-        }
         public double MinimumAtInterval()
         {
-            if (C == 0)
-            {
-                if (B > 0)
-                {
-                    return From;
-                }
-                else
-                {
-                    return To;
-                }
-            }
-            double minimum = (-B / (2 * C));
-            if (minimum < From)
+            if (-B < From * 2 * C)
             {
                 return From;
             }
-            else if (minimum > To)
+            if (-B > To * 2 * C)
             {
                 return To;
             }
             else
             {
-                return minimum;
+                return -B / (2 * C) ;
             }
         }
-        //public double MinimumAtInterval()
-        //{
-        //    double minimum = (-B / (2 * C));
-        //    if ((C == 0 && B > 0) || minimum < From)
-        //    {
-        //        return From;
-        //    }
-        //    else if (C == 0 || minimum > To)
-        //    {
-        //        return To;
-        //    }
-        //    else
-        //    {
-        //        return minimum;
-        //    }
-        //}
-        //public double idiomaticCSharp()
-        //{
-        //    double minimum = (-B / (2 * C));
-        //    return ((C == 0 && B > 0) || minimum < From) ? From : (C == 0 || minimum > To) ? To : minimum;
-        //}
         public bool NonEmptyInterval(double from, double to)
         {
             double realFrom = Math.Max(From, from);
@@ -193,11 +125,11 @@ namespace ADMMUC._1UC
         {
             if (p <= To && From <= To)
                 return A + p * B + (p * p * C);
-            else
+            else 
                 return Double.MaxValue;
         }
 
-        public Tuple<double, double> Intersects(QuadraticInterval otherInterval)
+        public (double, double) Intersects(QuadraticInterval otherInterval)
         {
             double a = otherInterval.A - A;
             double b = otherInterval.B - B;
@@ -206,12 +138,12 @@ namespace ADMMUC._1UC
             {
                 if (b == 0)
                 {
-                    return new Tuple<double, double>(double.MinValue, double.MinValue);
+                    return (double.MinValue, double.MinValue);
                 }
                 else
                 {
                     var test = -a / b;
-                    return new Tuple<double, double>(test, test);
+                    return (test, test);
                 }
 
             }
@@ -220,13 +152,13 @@ namespace ADMMUC._1UC
                 double discriminant = (b * b - a * c * 4);
                 if (discriminant < 0)
                 {
-                    return new Tuple<double, double>(double.MinValue, double.MinValue);
+                    return (double.MinValue, double.MinValue);
                 }
                 else
                 {
                     double left = -b / (2 * c);
                     double right = (Math.Sqrt(discriminant) / (2 * c));
-                    return new Tuple<double, double>(left -right, left+right);
+                    return (left -right, left+right);
                 }
             }
         }
@@ -278,21 +210,21 @@ namespace ADMMUC._1UC
             return solution;
         }
 
-        public  Tuple<bool,double> IntersectInIntervalCombined(double iFrom, double iTo, QuadraticInterval interval, double p)
+        public   (bool,double) IntersectInIntervalCombined(double iFrom, double iTo, QuadraticInterval interval, double p)
         {
             var interstion = Intersects(interval);
             double firstIntersect = interstion.Item1;
 
             if (iFrom <= firstIntersect && firstIntersect <= iTo && p < firstIntersect)
             {
-                return new Tuple<bool, double>(true, firstIntersect);
+                return (true, firstIntersect);
             }
             double secondIntersect = interstion.Item2;
             if (iFrom <= secondIntersect && secondIntersect <= iTo && p < secondIntersect)
             {
-                return new Tuple<bool, double>(true, secondIntersect);
+                return (true, secondIntersect);
             }
-            return new Tuple<bool,double> (false,0);
+            return  (false,0);
         }
         public bool IntersectInIntervalBool(double iFrom, double iTo, QuadraticInterval interval, double p)
         {
