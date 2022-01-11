@@ -115,17 +115,14 @@ namespace ADMMUC._1UC
         }
         public void Trim()
         {
-            var first = Intervals.First();
-            while (first.From == first.To)
+
+            while (Intervals[0].From == Intervals[0].To)
             {
                 Intervals.RemoveAt(0);
-                first = Intervals.First();
             }
-            var last = Intervals.Last();
-            while (last.From == last.To)
+            while (Intervals[Intervals.Count - 1].From == Intervals[Intervals.Count - 1].To)
             {
                 Intervals.RemoveAt(Intervals.Count - 1);
-                last = Intervals.Last();
             }
         }
 

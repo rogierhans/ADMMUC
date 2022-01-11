@@ -18,7 +18,7 @@ class Program
     {
 
         {
-            var filename = @"C:\Users\Rogier\Google Drive\Data\Github\" + "FERC923.uc";
+            var filename = @"C:\Users\Rogier\Google Drive\Data\Github\" + "GA10.uc";
 
             int totalTime = 24;
             var rhoUpdate = 1.1;
@@ -29,7 +29,7 @@ class Program
             for (int iter = 0; iter < 10; iter++)
             {
                 var PSS = new PowerSystemSolution(filename, totalTime, rho, rhoUpdate, count, 1);
-                PSS.Test1UC = true;
+               // PSS.Test1UC = true;
                 PSS.RunIterations(10000);
                 Console.WriteLine("{0}", PSS.FinalScore);
                 //  Console.ReadLine();
