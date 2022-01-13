@@ -30,119 +30,25 @@ namespace ADMMUC._1UC
         {
             return new QuadraticInterval(From, To, A, B, C, ZID);
         }
-        public double IntersectPoint(QuadraticInterval other, double Point, double NextPoint)
-        {
-            if (Point == To)
-                return To;
-            double p = (A - other.A) / (other.B - B);
-            if (From <= p && p <= NextPoint && other.From <= p && p <= NextPoint)
-            {
-                double val1 = A + B * p;
-                double val2 = other.A + other.B * p;
-                if (Math.Abs(val1 - val2) > 0.001)
-                {
-                    Console.WriteLine("[{0},{1}] [{2},{3}] ,{4}", From, To, other.From, other.To, p);
-                    Console.WriteLine("{0} {1}", val1, val2);
-                    // Console.ReadLine();
-                }
 
-                return p;
-            }
-            if (To < NextPoint)
-            {
-                return To;
-            }
-            Console.WriteLine("{0} {1}", Point, NextPoint);
-            Console.WriteLine("[{0},{1}] [{2},{3}] ,{4}", From, To, other.From, other.To, p);
-            Console.WriteLine("you fucked up, Rogier");
-            Console.ReadLine();
-            throw new Exception("STOP LEL");
-        }
 
-        public double Minimum()
-        {
-            if (C == 0)
-            {
-                if (B > 0)
-                {
-                    return From;
-                }
-                else
-                {
-                    return To;
-                }
-            }
-            return (-B / (2 * C));
 
-        }
-        public double MinimumHack()
-        {
-            if (C == 0)
-            {
-                if (B > 0)
-                {
-                    return double.MinValue;
-                }
-                else if (B == 0)
-                {
-                    return From;
-                }
-                else
-                {
-                    return double.MaxValue;
-                }
-            }
-            return (-B / (2 * C));
-
-        }
+        //
         public double MinimumAtInterval()
         {
-            if (C == 0)
-            {
-                if (B > 0)
-                {
-                    return From;
-                }
-                else
-                {
-                    return To;
-                }
-            }
-            double minimum = (-B / (2 * C));
-            if (minimum < From)
+            if (-B <= From * (2 * C))
             {
                 return From;
             }
-            else if (minimum > To)
+            else if (-B  >= To * (2 * C))
             {
                 return To;
             }
             else
             {
-                return minimum;
+                return (-B / (2 * C));
             }
         }
-        //public double MinimumAtInterval()
-        //{
-        //    double minimum = (-B / (2 * C));
-        //    if ((C == 0 && B > 0) || minimum < From)
-        //    {
-        //        return From;
-        //    }
-        //    else if (C == 0 || minimum > To)
-        //    {
-        //        return To;
-        //    }
-        //    else
-        //    {
-        //        return minimum;
-        //    }
-        //}
-        //public double idiomaticCSharp()
-        //{
-        //    double minimum = (-B / (2 * C));
-        //    return ((C == 0 && B > 0) || minimum < From) ? From : (C == 0 || minimum > To) ? To : minimum;
-        //}
         public bool NonEmptyInterval(double from, double to)
         {
             double realFrom = Math.Max(From, from);
@@ -197,7 +103,7 @@ namespace ADMMUC._1UC
                 return Double.MaxValue;
         }
 
-        public Tuple<double, double> Intersects(QuadraticInterval otherInterval)
+        public (double, double) Intersects(QuadraticInterval otherInterval)
         {
             double a = otherInterval.A - A;
             double b = otherInterval.B - B;
@@ -206,12 +112,12 @@ namespace ADMMUC._1UC
             {
                 if (b == 0)
                 {
-                    return new Tuple<double, double>(double.MinValue, double.MinValue);
+                    return (double.MinValue, double.MinValue);
                 }
                 else
                 {
                     var test = -a / b;
-                    return new Tuple<double, double>(test, test);
+                    return (test, test);
                 }
 
             }
@@ -220,13 +126,13 @@ namespace ADMMUC._1UC
                 double discriminant = (b * b - a * c * 4);
                 if (discriminant < 0)
                 {
-                    return new Tuple<double, double>(double.MinValue, double.MinValue);
+                    return (double.MinValue, double.MinValue);
                 }
                 else
                 {
                     double left = -b / (2 * c);
                     double right = (Math.Sqrt(discriminant) / (2 * c));
-                    return new Tuple<double, double>(left -right, left+right);
+                    return (left - right, left + right);
                 }
             }
         }
@@ -278,21 +184,19 @@ namespace ADMMUC._1UC
             return solution;
         }
 
-        public  Tuple<bool,double> IntersectInIntervalCombined(double iFrom, double iTo, QuadraticInterval interval, double p)
+        public (bool, double) IntersectInIntervalCombined(double iFrom, double iTo, QuadraticInterval interval, double p)
         {
-            var interstion = Intersects(interval);
-            double firstIntersect = interstion.Item1;
+            var (firstIntersect, secondIntersect) = Intersects(interval);
 
             if (iFrom <= firstIntersect && firstIntersect <= iTo && p < firstIntersect)
             {
-                return new Tuple<bool, double>(true, firstIntersect);
+                return (true, firstIntersect);
             }
-            double secondIntersect = interstion.Item2;
             if (iFrom <= secondIntersect && secondIntersect <= iTo && p < secondIntersect)
             {
-                return new Tuple<bool, double>(true, secondIntersect);
+                return (true, secondIntersect);
             }
-            return new Tuple<bool,double> (false,0);
+            return (false, 0);
         }
         public bool IntersectInIntervalBool(double iFrom, double iTo, QuadraticInterval interval, double p)
         {

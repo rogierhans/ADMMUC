@@ -8,7 +8,7 @@ namespace ADMMUC._1UC
     public class RRF
     {
         public bool Reduction = true;
-        public List<F>[] Fs;
+        public List<F>[] Fs = new List<F>[1];
         double[,] stop;
         SUC UC;
         public int maxFunctions = 0;
@@ -27,7 +27,6 @@ namespace ADMMUC._1UC
             int bestTau = int.MaxValue;
             bool On = false;
             double bestP = 0;
-            F bestF = null;
 
             for (int tau = 0; tau < UC.MinDownTime; tau++)
             {
@@ -48,7 +47,7 @@ namespace ADMMUC._1UC
                     // Console.WriteLine("{0} {1} {2} {3} {4}", F.StartIndex,  valueAtMinimum, minimum, interval.From, interval.To);
                 }
             }
-
+            F bestF = Fs[UC.LagrangeMultipliers.Count - 1].First();
             foreach (var F in Fs[UC.LagrangeMultipliers.Count - 1])
             {
                 foreach (var interval in F.Intervals)
@@ -91,8 +90,6 @@ namespace ADMMUC._1UC
             //UC.CreateEnv();
             //UC.CalcOptimum();
             //Console.ReadLine();
-            solution.ForEach(t => Console.Write(t.P + "\t"));
-
             return new SUCSolution(UC, solution, GetScore());
         }
 
@@ -123,6 +120,7 @@ namespace ADMMUC._1UC
 
 
             }
+
         }
         public double GetScore()
         {
@@ -164,7 +162,7 @@ namespace ADMMUC._1UC
                 Z.NextPoints(h);
                 Z.IncreasePoints(h);
             }
-            if (h > UC.MinUpTime && Reduction)
+            if (h % 4 == 0 && h > UC.MinUpTime && Reduction)
             {
                 OGremoveWeaklings(h);
                 //AltRemoveWeaklings(h);
@@ -197,121 +195,62 @@ namespace ADMMUC._1UC
             return bestValue;
         }
 
-        private void AltRemoveWeaklings(int h)
+        private void OGremoveWeaklings(int t)
         {
-            HashSet<F> keepers = new HashSet<F>();
-            double maxValue = Fs[h].Max(Z => Z.Intervals.Last().To);
-            foreach (var Z in Fs[h].Where(Z => (h - Z.StartIndex) < UC.MinUpTime))
-            {
-                //Console.WriteLine("{0} {1} {2}<{3}", h, Z.StartIndex, h - Z.StartIndex, UC.minDownTime);
-                //Console.ReadLine();
-                keepers.Add(Z);
-            }
-            double p = UC.pMin;
-            F currentMinimum = GetMinimalFunction(p);
-            bool interSects = true;
-            while (interSects)
-            {
-                F nextMinimum = null;
-                keepers.Add(currentMinimum);
-                interSects = false;
-                double pIntersect = currentMinimum.Intervals.Last().To;
-                foreach (var otherZ in Fs[h].Where(otherZ => currentMinimum != otherZ && (h - otherZ.StartIndex) >= UC.MinUpTime))
-                {
-                    if (currentMinimum.DoesIntersect(otherZ, p))
-                    {
-                        interSects = true;
-                        double intersectPoint = currentMinimum.FirstIntersect(otherZ, p);
-                        if (intersectPoint < pIntersect)
-                        {
-
-                            nextMinimum = otherZ;
-                            pIntersect = intersectPoint;
-                        }
-                    }
-                }
-                if (pIntersect < maxValue && !interSects)
-                {
-                    nextMinimum = GetMinimalFunction(pIntersect);
-                    interSects = true;
-                }
-                p = pIntersect;
-                currentMinimum = nextMinimum;
-            }
-            Console.WriteLine("{0}   {1}", h, String.Join(" ", keepers.Select(F => F.StartIndex)));
-            Fs[h] = keepers.ToList();
-            F GetMinimalFunction(double point)
-            {
-                F minimalFunction = null;
-                double bestValue = double.MaxValue;
-                foreach (var Z in Fs[h])
-                {
-                    double valuez = Z.ValueAtP(p);
-                    if (Z.Intervals.Last().To > point && valuez < bestValue && (h - Z.StartIndex) >= UC.MinUpTime)
-                    {
-                        minimalFunction = Z;
-                        bestValue = valuez;
-                    }
-                }
-                return minimalFunction;
-            }
-        }
-
-        private void OGremoveWeaklings(int h)
-        {
-            List<F> ActiveSetOfF = Fs[h];
-            bool[] flagged = FlagThoseWithTauLowerThanMinimumUpTime(h, ActiveSetOfF);
+            List<F> ActiveSetOfF = Fs[t];
+            bool[] flagged = FlagThoseWithTauLowerThanMinimumUpTime(t, Fs[t]);
             double lastValue = GetHighestDomain(ActiveSetOfF);
-            double p = UC.pMin;
-            int INDEX = GetIndexOfFminimalAtP(h, ActiveSetOfF, p);
+            int INDEX = GetIndexOfFminimalAtP(t, ActiveSetOfF, UC.pMin);
             bool interSects = true;
+            double currentEndPiece = UC.pMin;
             while (interSects)
             {
+                interSects = false;
                 int nextIndex = INDEX;
                 flagged[INDEX] = true;
-                interSects = false;
-                double currentPieceEnd = ActiveSetOfF[INDEX].Intervals.Last().To;
-
+                double nextEndPiece = ActiveSetOfF[INDEX].Intervals.Last().To;
                 for (int i = 0; i < ActiveSetOfF.Count; i++)
                 {
-                    var currentF = ActiveSetOfF[INDEX];
                     var otherF = ActiveSetOfF[i];
-                    bool IsCandidate = (h - otherF.StartIndex) >= UC.MinUpTime;
-                    if (i != INDEX && IsCandidate && currentF.DoesIntersect(otherF, p))
+                    if (i == INDEX || (t - otherF.StartIndex) < UC.MinUpTime) continue;
+
+                    var (suc, firstIntersection) = ActiveSetOfF[INDEX].FirstIntersect(otherF, currentEndPiece);
+                    if (suc && firstIntersection < nextEndPiece)
                     {
-                        double firstIntersection = currentF.FirstIntersect(otherF, p);
                         interSects = true;
-                        if (firstIntersection < currentPieceEnd)
-                        {
-                            nextIndex = i;
-                            currentPieceEnd = firstIntersection;
-                        }
+                        nextIndex = i;
+                        nextEndPiece = firstIntersection;
                     }
+
                 }
-                p = currentPieceEnd;
-                //if there is no intersection but there is a function F with a higher p in  domain
-                if (p < lastValue && !interSects)
+                if (nextEndPiece < lastValue && !interSects)
                 {
-                    nextIndex = -1;
-                    double bestValue = double.MaxValue;
-                    for (int i = 0; i < ActiveSetOfF.Count; i++)
-                    {
-                        var otherF = ActiveSetOfF[i];
-                        double otherValue = otherF.ValueAtP(p);
-                        bool IsCandidate = (h - otherF.StartIndex) >= UC.MinUpTime;
-                        bool HigherPInDomain = ActiveSetOfF[i].Intervals.Last().To > p;
-                        if (HigherPInDomain && otherValue < bestValue && IsCandidate)
-                        {
-                            nextIndex = i;
-                            bestValue = otherValue;
-                        }
-                    }
                     interSects = true;
+                    nextIndex = FindHighestFunction(t, ActiveSetOfF, nextIndex, nextEndPiece);
                 }
+                currentEndPiece = nextEndPiece;
                 INDEX = nextIndex;
             }
             RemoveFlagged(ActiveSetOfF, flagged);
-            Fs[h] = ActiveSetOfF;
+            Fs[t] = ActiveSetOfF;
+        }
+
+        private int FindHighestFunction(int h, List<F> ActiveSetOfF, int nextIndex, double nextEndPiece)
+        {
+            double bestValue = double.MaxValue;
+            for (int i = 0; i < ActiveSetOfF.Count; i++)
+            {
+                var otherF = ActiveSetOfF[i];
+                double otherValue = otherF.ValueAtP(nextEndPiece);
+                bool IsCandidate = (h - otherF.StartIndex) >= UC.MinUpTime;
+                bool HigherPInDomain = ActiveSetOfF[i].Intervals.Last().To > nextEndPiece;
+                if (HigherPInDomain && otherValue < bestValue && IsCandidate)
+                {
+                    nextIndex = i;
+                    bestValue = otherValue;
+                }
+            }
+            return nextIndex;
         }
 
         private static double GetHighestDomain(List<F> ActiveSetOfF)
@@ -344,7 +283,7 @@ namespace ADMMUC._1UC
             {
                 var Z = ActiveSetOfF[i];
                 double valuez = Z.ValueAtP(p);
-                if (ActiveSetOfF[i].Intervals.Last().To > p && valuez < bbestValue && (h - Z.StartIndex) >= UC.MinUpTime)
+                if (ActiveSetOfF[i].Intervals.Last().To > p && valuez < bbestValue)
                 {
                     INDEX = i;
                     bbestValue = valuez;
