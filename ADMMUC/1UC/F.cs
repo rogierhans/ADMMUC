@@ -72,16 +72,12 @@ namespace ADMMUC._1UC
 
 
         private int GetOptimalNode()
-
         {
             int INDEX = 0;
-            var min = Intervals[INDEX].MinimumHack();
-            while (min > Intervals[INDEX].To && INDEX < Intervals.Count - 1)
+            while (-Intervals[INDEX].B > Intervals[INDEX].To * 2 * Intervals[INDEX].C && INDEX < Intervals.Count - 1)
             {
                 INDEX++;
-                min = Intervals[INDEX].MinimumHack();
             }
-
             return INDEX;
         }
 
