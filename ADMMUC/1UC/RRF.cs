@@ -91,6 +91,8 @@ namespace ADMMUC._1UC
             //UC.CreateEnv();
             //UC.CalcOptimum();
             //Console.ReadLine();
+            solution.ForEach(t => Console.Write(t.P + "\t"));
+
             return new SUCSolution(UC, solution, GetScore());
         }
 

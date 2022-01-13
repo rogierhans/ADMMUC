@@ -104,26 +104,28 @@ public class SUC
     }
     public static SUC ReadFromFile(string filename)
     {
-        var suc = new SUC();
         var lines = File.ReadAllLines(filename);
         int i = 0;
-        suc.Objective = double.Parse(lines[i++]);
-        suc.TotalTime = int.Parse(lines[i++]);
-        suc.pMax = int.Parse(lines[i++]);
-        suc.pMin = int.Parse(lines[i++]);
-        suc.RampUp = int.Parse(lines[i++]);
-        suc.RampDown = int.Parse(lines[i++]);
-        suc.SU = int.Parse(lines[i++]);
-        suc.SD = int.Parse(lines[i++]);
-        suc.MinDownTime = int.Parse(lines[i++]);
-        suc.MinUpTime = int.Parse(lines[i++]);
-        suc.StartCost = double.Parse(lines[i++]);
-        suc.A = double.Parse(lines[i++]);
-        suc.B = double.Parse(lines[i++]);
-        suc.C = double.Parse(lines[i++]);
-        suc.LagrangeMultipliers = lines[i++].Split('\t').Select(x => double.Parse(x)).ToList();
-        suc.BM = lines[i++].Split('\t').Select(x => double.Parse(x)).ToArray();
-        suc.CM = lines[i++].Split('\t').Select(x => double.Parse(x)).ToArray();
+        var suc = new SUC
+        {
+            Objective = double.Parse(lines[i++]),
+            TotalTime = int.Parse(lines[i++]),
+            pMax = int.Parse(lines[i++]),
+            pMin = int.Parse(lines[i++]),
+            RampUp = int.Parse(lines[i++]),
+            RampDown = int.Parse(lines[i++]),
+            SU = int.Parse(lines[i++]),
+            SD = int.Parse(lines[i++]),
+            MinDownTime = int.Parse(lines[i++]),
+            MinUpTime = int.Parse(lines[i++]),
+            StartCost = double.Parse(lines[i++]),
+            A = double.Parse(lines[i++]),
+            B = double.Parse(lines[i++]),
+            C = double.Parse(lines[i++]),
+            LagrangeMultipliers = lines[i++].Split('\t').Select(x => double.Parse(x)).ToList(),
+            BM = lines[i++].Split('\t').Select(x => double.Parse(x)).ToArray(),
+            CM = lines[i++].Split('\t').Select(x => double.Parse(x)).ToArray()
+        };
         //string.Join("\t" = int.Parse(lines[i++]); LagrangeMultipliers)= int.Parse(lines[i++]);
         //string.Join("\t" = int.Parse(lines[i++]); BM)= int.Parse(lines[i++]);
         //string.Join("\t" = int.Parse(lines[i++]); CM)
