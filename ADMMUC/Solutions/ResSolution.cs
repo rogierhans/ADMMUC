@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace ADMMUC.Solutions
 {
-  public   class ResSolution
+    public class ResSolution
     {
         public double[] MaxDisptach;
         public double[] Dispatch;
@@ -33,7 +33,7 @@ namespace ADMMUC.Solutions
         }
         public double MinimumAtInterval(int t, double B, double C)
         {
-            var max = MaxDisptach[t% TotalDispatchHorizon];
+            var max = MaxDisptach[t % TotalDispatchHorizon];
             if (C == 0)
             {
                 if (B > 0)
@@ -73,7 +73,6 @@ namespace ADMMUC.Solutions
                 Demand[NodeID, t] = Demand[NodeID, t] - Dispatch[t];
             }
         }
-
         internal double LR(double[,] nodeMultipliers, int totalTime)
         {
             double totalCost = 0;

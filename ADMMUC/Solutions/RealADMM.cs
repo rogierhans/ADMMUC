@@ -15,8 +15,6 @@ namespace ADMMUC.Solutions
         readonly double[,] NodeMultipliers;
         public GenerationSolution[] GSolutions;
         ResSolution[] RSolutions;
-
-        // SingleBigTrans[] SBSolutions;
         readonly private int totalTime;
         private int totalNodes;
         private int totalRes;
@@ -39,17 +37,12 @@ namespace ADMMUC.Solutions
             this.multiplierMultiplier = multiplierMultiplier;
             NodeMultipliers = new double[totalNodes, totalTime];
             Demand = new double[totalNodes, totalTime];
-            UpdateMultipliers = new double[totalNodes, totalTime];
-            LastUpdateMultipliers = new double[totalNodes, totalTime];
-
             SetMultipliers();
             CreateGenerationSolution(totalTime);
             CreateTransmissionSolution(totalTime);
             CreateResSolutions(totalTime);
             Resolve = new ResolveTrans(PowerSystem, totalTime, true, false);
             this.rhoUpdateCounter = rhoUpdateCounter;
-            //  WriteAlgorithmToFile(fileName, totalTime, rho, rhoMultiplier, maxIterations);
-
         }
 
         private void SetMultipliers()
@@ -64,9 +57,6 @@ namespace ADMMUC.Solutions
                 }
             }
         }
-
-        readonly double[,] LastUpdateMultipliers;
-        readonly double[,] UpdateMultipliers;
         public void UpdateMultiplers(double rho)
         {
             var UpdateMultipliers = GetDemand();
@@ -81,8 +71,6 @@ namespace ADMMUC.Solutions
         public double FinalScore;
         public double FinalTime;
         public int FinalIteration;
-        //public double FinalScore2;
-        //  public double FinalTime2;
         public Stopwatch SWTrans = new Stopwatch();
         public Stopwatch SWGen = new Stopwatch();
         public List<(double, double)> ResolvesScores = new List<(double, double)>();
@@ -95,7 +83,7 @@ namespace ADMMUC.Solutions
 
             swALL.Start();
             List<string> lines = new List<string>();
-            while (i++ < maxIterations && !RhoLargeEnough())//&& swALL.Elapsed.TotalMinutes < 30)
+            while (i++ < maxIterations && !RhoLargeEnough())
             {
                 sw.Start();
                 Go(rhoUpdateCounter);
@@ -113,8 +101,6 @@ namespace ADMMUC.Solutions
                 }
             }
             FinalIteration = i;
-            //File.WriteAllLines(@"C:\Users\4001184\Desktop\" + rhoUpdateCounter + " " + RhoMultiplier + "MILP.txt", lines);
-
             FinalScore = GSolutions.Sum(g => g.ReevalCost);
             FinalTime = sw.Elapsed.TotalMilliseconds / 1000;
             Resolve.KILL();
@@ -250,8 +236,6 @@ namespace ADMMUC.Solutions
             Resolve.Check(commits, Ps);
         }
 
-
-
         private void CreateResSolutions(int totalTime)
         {
             RSolutions = new ResSolution[totalRes];
@@ -260,29 +244,10 @@ namespace ADMMUC.Solutions
                 RSolutions[r] = new ResSolution(PowerSystem.Res[r].ResValues.ToList().Take(totalTime).ToArray(), PowerSystem.Nodes.First(n => n.RESindex.Contains(r)).ID, totalTime);
             }
         }
-        //BIGSOLOTransmission BIGSOLOSolutions;
-        //  BigTransmissionSolution TSolutions;
         ADMMTrans TSolutions;
-        // BIGSOLOTransmission BIGSOLOSolutions;
         private void CreateTransmissionSolution(int totalTime)
         {
             TSolutions = new ADMMTrans(PowerSystem, totalTime);
-            // TSolutions = new BIGSOLOTransmission(PowerSystem, PowerSystem.Lines, totalNodes, totalTime);
-            //BIGSOLOSolutions = new BIGSOLOTransmission(PowerSystem, PowerSystem.Lines, totalNodes, totalTime);
-        }
-
-        private void WriteSolutionToFile()
-        {
-            for (int t = 0; t < totalTime; t++)
-            {
-                double sum = 0;
-                for (int g = 0; g < totalUnits; g++)
-                {
-                    sum += GSolutions[g].CurrentDispatchAtTime[t];
-                    //Console.WriteLine(GSolutions[g].CurrentDispatchAtTime[t]);
-                }
-                Console.WriteLine(t + " " + sum);
-            }
         }
 
         private void CreateGenerationSolution(int totalTime)
@@ -310,10 +275,7 @@ namespace ADMMUC.Solutions
                 else
                 {
                     var SGU = new SUC(unit.A, unit.B, unit.C, unit.StartCostInterval.First(), pMax, pMin, RU, RD, MinUp, minDownTime, SU, SD, totalTime);
-                 //   SGU.Unit = unit;
                     GSolutions[u] = new GenerationSolution(SGU, totalTime, PowerSystem.Nodes.First(node => node.UnitsIndex.Contains(u)).ID , "NoName");
-
-                   // SGU.CreateEnv(GLOBAL.RelaxGurobi);
                 }
             }
             Console.Write(PowerSystem.Nodes.Count);
@@ -329,7 +291,6 @@ namespace ADMMUC.Solutions
                 Console.WriteLine();
                 Console.Write(PowerSystem.Nodes[n]);
                 PowerSystem.Nodes[n].UnitsIndex.Add(index);
-                //UC.CreateEnv(GLOBAL.RelaxGurobi);
             }
         }
 
@@ -357,124 +318,10 @@ namespace ADMMUC.Solutions
             return p && counter > 500;
         }
 
-        private void WriteIteration(string outputFileName, Stopwatch sw)
-        {
-            string line = GSolutions.Sum(g => g.ReevalCost)
-                + " " + ResidualLoad()
-                + " " + Rho
-                + " " + (sw.Elapsed.TotalMilliseconds / 1000) + "\n";
-            File.AppendAllText(outputFileName, line);
-        }
+       
 
-        private void WriteMulitpliers(int totalTime, string MultiFile)
-        {
-            for (int n = 0; n < totalNodes; n++)
-            {
-                string line = "";
-                for (int t = 0; t < totalTime; t++)
-                {
-                    line += Math.Round(NodeMultipliers[n, t], 2) + "\t";
-                }
-                File.AppendAllText(MultiFile, line + "\n");
-            }
-        }
+        
 
-
-        public List<int[,]> History = new List<int[,]>();
-        private void Save()
-        {
-            var temp = new int[totalTime, totalUnits];
-            for (int g = 0; g < totalUnits; g++)
-            {
-                for (int t = 0; t < totalTime; t++)
-                {
-                    temp[t, g] = (GSolutions[g].OldSolution.Steps[t].On ? 1 : 0);
-                }
-            }
-            History.Add(temp);
-        }
-        public void PrintAverage(int last)
-        {
-            Test();
-            Console.ReadLine();
-            var temp = new int[totalTime, totalUnits];
-            foreach (var snap in History.Skip(History.Count - last).Take(last))
-            {
-                for (int g = 0; g < totalUnits; g++)
-                {
-                    for (int t = 0; t < totalTime; t++)
-                    {
-                        temp[t, g] += snap[t, g];
-                    }
-                }
-            }
-            for (int t = 0; t < totalTime; t++)
-            {
-                string line = "";
-                for (int g = 0; g < totalUnits; g++)
-                {
-                    double value = (double)temp[t, g] / last;
-                    double min = Math.Min(value, 1 - value);
-                    line += min + "\t";
-                }
-                Console.WriteLine(line);
-            }
-            ///throw new Exception();
-        }
-
-        public void Test2()
-        {
-            var temp = History.Last();
-            for (int i = History.Count() - 1; i >= 0; i--)
-            {
-                bool same = true;
-                for (int g = 0; g < totalUnits; g++)
-                {
-                    for (int t = 0; t < totalTime; t++)
-                    {
-                        same &= temp[t, g] == History[i][t, g];
-                    }
-                }
-                if (!same)
-                {
-                    Console.WriteLine("{0} {1}", i, History.Count);
-                    Console.ReadLine();
-                }
-            }
-        }
-        public void Test()
-        {
-            var temp = History.First();
-            List<int> list = new List<int>();
-            for (int i = 0; i < History.Count; i++)
-            {
-                int count = 0;
-                for (int g = 0; g < totalUnits; g++)
-                {
-                    for (int t = 0; t < totalTime; t++)
-                    {
-                        count += temp[t, g] == History[i][t, g] ? 0 : 1;
-                    }
-                }
-                list.Add(count);
-                temp = History[i];
-            }
-            Console.WriteLine(string.Join(" ", list));
-        }
-
-
-        private void PrintStuff()
-        {
-            //PrinteGenerators();
-            ///
-            if (counter % 200 == 0)
-            {
-                ;
-                PrintDemand();
-                PrintMultiplier();
-                Console.ReadLine();
-            }
-        }
 
         private double ResidualLoad()
         {
@@ -516,113 +363,6 @@ namespace ADMMUC.Solutions
                 cost += RSolutions[g].LR(NodeMultipliers, totalTime);
             }
             return cost;
-        }
-        private void PrinteGenerators()
-        {
-            Console.WriteLine();
-            var demand = GetDemand();
-            for (int g = 0; g < GSolutions.Length; g++)
-            {
-                string line = "";
-                for (int t = 0; t < totalTime; t++)
-                {
-                    line += Math.Round(GSolutions[g].CurrentDispatchAtTime[t]) + "\t";
-                }
-                Console.WriteLine(line);
-                GSolutions[g].PrintStats();
-            }
-        }
-
-        public void PrintMultiplier()
-        {
-            Console.WriteLine("Multipliers:");
-            for (int n = 0; n < totalNodes; n++)
-            {
-                string line = "";
-                for (int t = 0; t < totalTime; t++)
-                {
-                    line += Math.Round(NodeMultipliers[n, t], 10) + "\t";
-                }
-                Console.WriteLine(line);
-            }
-        }
-        private void PrintGeneration()
-        {
-            string line = "units:";
-            for (int t = 0; t < totalTime; t++)
-            {
-                double total = 0;
-                foreach (var gsol in GSolutions)
-                {
-                    total += gsol.CurrentDispatchAtTime[t];
-                }
-                line += "\t" + Math.Round(total, 1);
-            }
-            Console.WriteLine(line);
-            line = "RES:";
-            for (int t = 0; t < totalTime; t++)
-            {
-                double total = 0;
-                foreach (var gsol in RSolutions)
-                {
-                    total += gsol.Dispatch[t];
-                }
-                line += "\t" + Math.Round(total, 1);
-            }
-            Console.WriteLine(line);
-
-            line = "Both:";
-            for (int t = 0; t < totalTime; t++)
-            {
-                double total = 0;
-                foreach (var gsol in RSolutions)
-                {
-                    total += gsol.Dispatch[t];
-                }
-                foreach (var gsol in GSolutions)
-                {
-                    total += gsol.CurrentDispatchAtTime[t];
-                }
-                line += "\t" + Math.Round(total, 1);
-            }
-            Console.WriteLine(line);
-
-
-            line = "Demand:";
-            for (int t = 0; t < totalTime; t++)
-            {
-                double total = 0;
-                foreach (var gsol in PowerSystem.Nodes)
-                {
-                    total += gsol.NodalDemand(t);
-                }
-                line += "\t" + Math.Round(total, 1);
-            }
-            Console.WriteLine(line);
-        }
-
-        private void PrintDemand()
-        {
-
-            var demand = GetDemand();
-            Console.WriteLine("Demand:");
-            for (int t = 0; t < totalTime; t++)
-            {
-                string line = "";
-                string line2 = "";
-                for (int n = 0; n < totalNodes; n++)
-                {
-
-                    var genSolutions = PowerSystem.Nodes[n].UnitsIndex.Select(g => GSolutions[g]);
-
-                    var resSolutions = PowerSystem.Nodes[n].RESindex.Select(g => RSolutions[g]);
-                    line += Math.Round(demand[n, t]) + "\t";
-                    line2 += PowerSystem.Nodes[n].NodalDemand(t) + "\t";
-                }
-                Console.WriteLine(line);
-                // Console.WriteLine(line2);
-            }
-            Console.WriteLine("%%%%%%%%%%%%%%%%%%%%%%%%%%%%Demand");
         }
 
         public double[,] Demand = new double[1, 1];
