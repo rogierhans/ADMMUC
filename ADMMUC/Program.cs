@@ -14,48 +14,28 @@ namespace ADMMUC;
 
 class Program
 {
-    
     static void Main()
     {
-        //{
-        //    var filename = @"C:\Users\Rogier\Desktop\CrashSave\15858.suc";
-        //    //Console.WriteLine(filename);
-        //    var suc = SUC.ReadFromFile(filename);
-        //    // var G = new Gurobi1UC(suc);
-        //    //var (x ,y,z) = G.CalcOptimum();
-        //    // if (Math.Abs(x - suc.Objective) > 0.001)
-        //    // {
-        //    //     Console.WriteLine("{0} {1} {2}", x, y, suc.Objective);
-        //    //     Console.WriteLine(filename);
-        //    //     Console.ReadLine();
-        //    // }
-        //    var solution = new RRF(suc, true).GetSolution();
-        //    return;
-       // }
+        var filename = @"C:\Users\Rogier\Google Drive\Data\Github\" + "GA10.uc";
+        int totalTime = 24;
+        var rhoUpdate = 1.1;
+        var rho = 0.0001;
+        var count = 10;
+        var sw = new Stopwatch();
+        sw.Start();
+        for (int iter = 0; iter < 10; iter++)
         {
-            var filename = @"C:\Users\Rogier\Google Drive\Data\Github\" + "GA10.uc";
-
-            int totalTime = 168;
-            var rhoUpdate = 1.1;
-            var rho = 0.0001;
-            var count = 10;
-            var sw = new Stopwatch();
-            sw.Start();
-            for (int iter = 0; iter < 10; iter++)
-            {
-                var PSS = new PowerSystemSolution(filename, totalTime, rho, rhoUpdate, count, 1);
-               // PSS.Test1UC = true;
-                PSS.RunIterations(10000);
-                Console.WriteLine("{0}", PSS.FinalScore);
-                //  Console.ReadLine();
-                Console.WriteLine(sw.Elapsed.TotalSeconds / (iter+1));
-            }
-            sw.Stop();
-            Console.WriteLine(sw.Elapsed.TotalSeconds);
-            Console.ReadLine();
+            var PSS = new PowerSystemSolution(filename, totalTime, rho, rhoUpdate, count, 1);
+            // PSS.Test1UC = true;
+            PSS.RunIterations(10000);
+            Console.WriteLine("{0}", PSS.FinalScore);
+            //  Console.ReadLine();
+            Console.WriteLine(sw.Elapsed.TotalSeconds / (iter + 1));
         }
+        sw.Stop();
+        Console.WriteLine(sw.Elapsed.TotalSeconds);
+        Console.ReadLine();
     }
-
 }
 
 public static class GLOBAL
@@ -74,7 +54,6 @@ public static class GLOBAL
         UseGurobi = true;
         RelaxGurobi = true;
         ResolveInteration = false;
-        // IncreaseRho = false;
     }
 
     public static void Reverse()

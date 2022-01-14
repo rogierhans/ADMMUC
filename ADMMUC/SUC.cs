@@ -29,13 +29,8 @@ public class SUC
     public double[] BM;
     public double[] CM;
 
-    internal void PrintStats()
-    {
-        Console.WriteLine("[{0},{1}] +{2}  -{3}   {4}  {5}  {6} {7}", pMin, pMax, RampUp, RampDown, SU, SD, MinUpTime, MinDownTime);
-    }
+
     public SUC() {
-        BM = new double[1];
-        CM = new double[1];
     }
 
     public SUC(double a, double b, double c, double start, int pMax, int pMin, int rampUp, int rampDown, int minUpTime, int minDownTime, int su, int sd, int totalTime)
@@ -79,8 +74,6 @@ public class SUC
 
         }
     }
-
-
 
     public void WriteToFile(string filename)
     {
@@ -129,9 +122,11 @@ public class SUC
             BM = lines[i++].Split('\t').Select(x => double.Parse(x)).ToArray(),
             CM = lines[i++].Split('\t').Select(x => double.Parse(x)).ToArray()
         };
-        //string.Join("\t" = int.Parse(lines[i++]); LagrangeMultipliers)= int.Parse(lines[i++]);
-        //string.Join("\t" = int.Parse(lines[i++]); BM)= int.Parse(lines[i++]);
-        //string.Join("\t" = int.Parse(lines[i++]); CM)
         return suc;
+    }
+
+    internal void PrintStats()
+    {
+        Console.WriteLine("[{0},{1}] +{2}  -{3}   {4}  {5}  {6} {7}", pMin, pMax, RampUp, RampDown, SU, SD, MinUpTime, MinDownTime);
     }
 }

@@ -339,12 +339,7 @@ namespace ADMMUC.Solutions
                 }
             }
         }
-        public GRBLinExpr SummationTotal(int total, Func<int, GRBLinExpr> func)
-        {
-            //Console.WriteLine(total + " "+ func.ToString());
-            if (total == 0) return func(0);
-            else return U.GetNumbers(total).Select(i => func(i)).Aggregate((a, b) => a + b);
-        }
+        
         public GRBLinExpr CurrentObjective;
         public GRBVar GenerationCost;
         public GRBVar CycleCost;
