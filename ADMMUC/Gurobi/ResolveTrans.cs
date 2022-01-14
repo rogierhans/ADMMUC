@@ -69,7 +69,7 @@ namespace ADMMUC.Solutions
             Model.Parameters.Threads = 1;
             var sw = new Stopwatch();
             sw.Start();
-            var cb = new CallBackGurobi(PS, GenerationCost, CycleCost, LOLCost, Model);
+            var cb = new CallBackGurobi(PS, GenerationCost, CycleCost, LOLCost);
             Model.SetCallback(cb);
             Model.Optimize();
             sw.Stop();
