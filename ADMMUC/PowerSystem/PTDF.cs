@@ -33,16 +33,11 @@ namespace ADMMUC.PWS
             var AtBA = A.Transpose() * B * A;
             var AtBAminus1 = AtBA.RemoveColumn(0).RemoveRow(0);
             var Inverse_AtBA = AtBAminus1.Inverse();
-
-            // PrintMatrix(Multiplication(Inverse_AtBA, RemoveColumnAndRow(AtBA, 0)));
-            //Console.ReadLine();
-
             var PTDF = BA * Inverse_AtBA;
             var PTDFarray = AddColumn(PTDF.ToArray());
-            //Write2File(PTDFarray);
             return PTDFarray;
         }
-        private void Write2File(double[,] PTDFarray)
+        private void Write2File(double[,] PTDFarray, string filename )
         {
             List<string> lines = new List<string>();
 
@@ -55,7 +50,7 @@ namespace ADMMUC.PWS
                 }
                 lines.Add(string.Join("\t", cells));
             }
-            File.WriteAllLines(@"C:\Users\Rogier\Desktop\DesktopOutput\ptdf.txt", lines);
+            File.WriteAllLines(filename, lines);
         }
 
         private double[,] AddColumn(double[,] matrix)

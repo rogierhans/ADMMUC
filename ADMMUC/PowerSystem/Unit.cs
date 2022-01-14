@@ -197,7 +197,6 @@ namespace ADMMUC
                 PiecewiseLengths[s] = segementLength;
 
                 PiecewiseCost[s] = GetSlope(cumulativeLength + PMin, cumulativeLength + PiecewiseLengths[s] + PMin);
-                // PiecewiseCost[s] = GetSlope(cumulativeLength + PiecewiseLengths[s] / 2 + PMin);
                 var prevCumulativeLength = cumulativeLength + PMin;
                 cumulativeLength += PiecewiseLengths[s];
                 PiecewiseCumalative[s] = cumulativeLength + PMin;
@@ -225,11 +224,6 @@ namespace ADMMUC
             double endCost = GetCost(endP);
 
             return (endCost - startCost) / (endP - startP);
-        }
-
-        private double GetSlope(double p)
-        {
-            return B + C * p * p;
         }
 
         public double GetCost(double p)

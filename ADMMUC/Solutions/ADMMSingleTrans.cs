@@ -95,7 +95,6 @@ namespace ADMMUC.Solutions
         private double Iteration(double[] Bs, double[] Cs)
         {
             double value = 0;
-            // GRBQuadExpr objective = 0;
             for (int l = 0; l < Lines.Count; l++)
             {
                 var line = Lines[l];
@@ -116,12 +115,6 @@ namespace ADMMUC.Solutions
                 value += (Bs[n] + Lagrange[n]) * export[n] + Cs[n] * export[n] * export[n];
                 value += -Lagrange[n] * FlowTotal[n];
             }
-
-            //model.SetObjective(objective, GRB.MINIMIZE);
-            //model.Optimize();
-            //value += objective.Value;
-
-
             return value;
         }
 

@@ -16,8 +16,6 @@ namespace ADMMUC
         public List<int> StorageUnitsIndex;
         public List<int> RESindex;
         public List<double> Demands = new List<double>();
-        //public List<double> SpinningReservesUP;
-        //public List<double> SpinningReservesDown;
 
 
         public Node(int iD, string name, List<int> unitsIndex, List<int> storageUnitsIndex, List<int> resindex)
@@ -27,9 +25,6 @@ namespace ADMMUC
             UnitsIndex = unitsIndex;
             StorageUnitsIndex = storageUnitsIndex;
             RESindex = resindex;
-            //Demand = demand;
-            //SpinningReservesUP = spinningReservesUP;
-            // SpinningReservesDown = spinningReservesDown;
         }
 
         public double PotentialExport(PowerSystem PS) {
@@ -44,7 +39,6 @@ namespace ADMMUC
                     double demand = Demands[t];
                     double range = demand / factor;
                     double delta = RNG.NextDouble() * range * 2 - range;
-                    //Console.WriteLine("demand:{0} naar {1}", demand, demand + delta);
                     Demands[t] = demand + delta;
                 }
         }
@@ -71,14 +65,11 @@ namespace ADMMUC
             {
                 Console.WriteLine(unit);
             }
-
             Console.WriteLine("Demand:");
             if (Demands != null)
                 Demands.Take(10).ToList().ForEach(demand => Console.WriteLine(demand));
 
             Console.WriteLine("ResGeneration:");
-
-
         }
 
 

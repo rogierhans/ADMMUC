@@ -13,10 +13,9 @@ namespace ADMMUC.Solutions
     {
         protected readonly PowerSystem PowerSystem;
         protected readonly double[,] NodeMultipliers;
-        public GenerationSolution[] GSolutions = Array.Empty<GenerationSolution>();
-        public ResSolution[] RSolutions = Array.Empty<ResSolution>();
+        public GenerationSolution[] GSolutions;
+        public ResSolution[] RSolutions;
         public ADMMTrans TSolution;
-
         readonly protected int totalTime;
         readonly protected int totalNodes;
         readonly protected int totalRes;
@@ -25,7 +24,6 @@ namespace ADMMUC.Solutions
         readonly protected double RhoMultiplier;
         readonly protected double multiplierMultiplier;
         readonly protected int rhoUpdateCounter;
-
         // readonly ResolveTrans Resolve;
         public PowerSystemSolution(string fileName, int totalTime, double rho, double rhoMultiplier, int rhoUpdateCounter, double multiplierMultiplier)
         {
@@ -153,10 +151,6 @@ namespace ADMMUC.Solutions
             }
             Values.Add(GSolutions.Sum(g => g.ReevalCost));
         }
-
-
-
-
         protected void CreateResSolutions(int totalTime)
         {
             RSolutions = new ResSolution[totalRes];
@@ -188,7 +182,6 @@ namespace ADMMUC.Solutions
                 else
                 {
                     var SGU = new SUC(unit.A, unit.B, unit.C, unit.StartCostInterval.First(), pMax, pMin, RU, RD, MinUp, minDownTime, SU, SD, totalTime);
-                    // SGU.Unit = unit;
                     GSolutions[u] = new GenerationSolution(SGU, totalTime, PowerSystem.Nodes.First(node => node.UnitsIndex.Contains(u)).ID, name);
                     // SGU.CreateEnv(GLOBAL.RelaxGurobi);
                 }
@@ -205,7 +198,6 @@ namespace ADMMUC.Solutions
         }
 
         protected bool ConvergedObjective()
-
         {
             int k = 10;
             var LastK = Values.Skip(Values.Count - k).Take(k).ToList();

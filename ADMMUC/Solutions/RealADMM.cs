@@ -344,7 +344,6 @@ namespace ADMMUC.Solutions
             {
                 cost += GSolutions[g].LR(NodeMultipliers, totalTime);
             }
-            // Console.WriteLine(cost);
             for (int t = 0; t < totalTime; t++)
             {
                 for (int n = 0; n < totalNodes; n++)
@@ -352,7 +351,6 @@ namespace ADMMUC.Solutions
                     cost += NodeMultipliers[n, t] * PowerSystem.Nodes[n].NodalDemand(t);
                 }
             }
-            // Console.WriteLine(cost);
             for (int t = 0; t < totalTime; t++)
             {
                 //    cost += TSolutions[t].LR(NodeMultipliers);
@@ -365,23 +363,7 @@ namespace ADMMUC.Solutions
             return cost;
         }
 
-        public double[,] Demand = new double[1, 1];
-        public double[,] GetDemand2()
-        {
-            for (int n = 0; n < totalNodes; n++)
-            {
-                var genSolutions = PowerSystem.Nodes[n].UnitsIndex.Select(g => GSolutions[g]);
-                var resSolutions = PowerSystem.Nodes[n].RESindex.Select(g => RSolutions[g]); ;
-                for (int t = 0; t < totalTime; t++)
-                {
-                    Demand[n, t] = -genSolutions.Sum(g => g.CurrentDispatchAtTime[t]);
-                    Demand[n, t] += -resSolutions.Sum(g => g.Dispatch[t]);
-                    Demand[n, t] += TSolutions.CurrentExport[n, t];
-                    Demand[n, t] += PowerSystem.Nodes[n].NodalDemand(t);
-                }
-            }
-            return Demand;
-        }
+        public double[,] Demand;
         public double[,] GetDemand()
         {
             for (int n = 0; n < totalNodes; n++)

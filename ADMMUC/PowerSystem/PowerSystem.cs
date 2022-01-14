@@ -16,7 +16,6 @@ namespace ADMMUC
         public List<TransmissionLine> Lines;
         public List<ResGeneration> Res;
         public List<StorageUnit> Storages;
-        //   public List<TransmissionLine> Lines;
         public ConstraintConfiguration ConstraintConfiguration;
         public double VOLL = 10000;
         
@@ -34,7 +33,6 @@ namespace ADMMUC
             {
                 Demands[t] += Nodes.Sum(node => node.NodalDemand(t));
             }
-            //Demands.ToList().ForEach(x => Console.WriteLine(x));
             Res = res;
             Lines = lines;
             Storages = storages;
@@ -77,13 +75,6 @@ namespace ADMMUC
             this.maxTime = maxTime;
             this.maxUnits = maxUnits < 0 ? int.MaxValue : maxUnits;
             this.maxStorage = maxStorage < 0 ? int.MaxValue : maxStorage;
-        }
-
-
-
-        private string Str(bool b)
-        {
-            if (b) return "1"; else return "0";
         }
     }
 }

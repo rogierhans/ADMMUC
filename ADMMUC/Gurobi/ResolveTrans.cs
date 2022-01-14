@@ -31,7 +31,7 @@ namespace ADMMUC.Solutions
 
 
         public void Kill() { Model.Dispose(); }
-        public ResolveTrans(PowerSystem ps, int totalTime, bool forResolve, bool forCheck)
+        public ResolveTrans(PowerSystem ps, int totalTime, bool forResolve, bool solutionComparison)
         {
             RESOLVE = forResolve;
             PS = ps;
@@ -42,8 +42,6 @@ namespace ADMMUC.Solutions
             totalNodes = PS.Nodes.Count;
             totalRES = PS.Res.Count;
             totalLinesAC = PS.Lines.Count;
-            // totalLinesDC = PS.LinesDC.Count;
-
             Console.WriteLine("IntialiseVariables");
             IntialiseVariables();
             Console.WriteLine("AddObjective");
@@ -57,17 +55,8 @@ namespace ADMMUC.Solutions
             AddRampingConstraints();
             AddTransmissionConstraints();
             AddMinConstraint();
-            if (forResolve)
-            {
-                Console.WriteLine("XD");
-                Setup();
-                if (forCheck)
-                {
-                    Setup2();
-                }
-            }
-
-
+            if (forResolve) Setup();
+            if (solutionComparison) Setup2();
         }
 
 
@@ -85,8 +74,6 @@ namespace ADMMUC.Solutions
             Model.Optimize();
             sw.Stop();
             MIPGAP = GLOBAL.RelaxGurobi ? 0 : Model.MIPGap;
-            // Console.ReadLine();
-            //Model.Dispose();
             double LOL = 0;
             for (int t = 0; t < totalTime; t++)
             {
@@ -106,7 +93,6 @@ namespace ADMMUC.Solutions
             var sw = new Stopwatch();
             sw.Start();
             Model.Optimize();
-            // Console.WriteLine(Model.Status);
             Model.Set("OutputFlag", "0");
             if (Model.Status == GRB.Status.INFEASIBLE || Model.Status == GRB.Status.INF_OR_UNBD)
             {
@@ -127,7 +113,6 @@ namespace ADMMUC.Solutions
                 }
             }
             Console.WriteLine("###################################################################");
-            //  Console.ReadLine();
             Console.WriteLine("{0} {1} {2}", CurrentObjective.Value, CycleCost.X + GenerationCost.X, LOL);
             Console.WriteLine("###################################################################");
             return (CurrentObjective.Value, sw.Elapsed.TotalMilliseconds, CycleCost.X + GenerationCost.X, LOL);
@@ -140,8 +125,6 @@ namespace ADMMUC.Solutions
 
         public void Check(int[,] commitStatus, double[,] Ps)
         {
-
-
             SetCommit(commitStatus);
             SetP(Ps);
             var sw = new Stopwatch();
@@ -159,12 +142,10 @@ namespace ADMMUC.Solutions
                 Process.Start("notepad++.exe", filename);
                 throw new Exception();
             }
-            //  Console.ReadLine();
         }
 
         public void IntialiseVariables()
         {
-
             AddDispatchVariables();
             AddRESDispatch();
             AddBinaryVariables();
@@ -175,8 +156,6 @@ namespace ADMMUC.Solutions
         private void AddTransmissionVariables()
         {
             TransmissionFlowAC = new GRBVar[totalLinesAC, totalTime];
-            // TransmissionFlowDC = new GRBVar[totalLinesDC, totalTime];
-            //NodeVoltAngle = new GRBVar[totalNodes, totalTime];
             for (int l = 0; l < totalLinesAC; l++)
             {
                 var line = PS.Lines[l];
@@ -272,9 +251,6 @@ namespace ADMMUC.Solutions
             }
         }
 
-
-
-
         private void AddDispatchVariables()
         {
             P = new GRBVar[totalTime, PS.Units.Count];
@@ -283,7 +259,6 @@ namespace ADMMUC.Solutions
                 P[t, u] = Model.AddVar(0, double.MaxValue, 0.0, GRB.CONTINUOUS, "P_" + u + "_" + t);
             });
         }
-
 
         private void AddRESDispatch()
         {
@@ -339,7 +314,7 @@ namespace ADMMUC.Solutions
                 }
             }
         }
-        
+
         public GRBLinExpr CurrentObjective;
         public GRBVar GenerationCost;
         public GRBVar CycleCost;
@@ -351,9 +326,7 @@ namespace ADMMUC.Solutions
             LinkGenerationCost();
             LinkStartUpCost();
             LinkLossOfLoad();
-            //Objective += GenerationCostVariable + CycleCostVariable + LOLCostVariable;
             CurrentObjective += GenerationCost + CycleCost + LOLCost;
-
             Model.SetObjective(CurrentObjective, GRB.MINIMIZE);
         }
 
@@ -382,7 +355,6 @@ namespace ADMMUC.Solutions
                 for (int u = 0; u < totalUnits; u++)
                 {
                     Unit unit = PS.Units[u];
-                    //Console.WriteLine(Vars.PiecewiseGeneration[u]);
                     GenCostTime += Commit[t, u] * unit.A;
                     GenCostTime += P[t, u] * unit.B + (unit.C != 0 ? P[t, u] * P[t, u] * unit.C : 0);
                     if (unit.C != 0)
@@ -515,15 +487,10 @@ namespace ADMMUC.Solutions
         public void AddRampingConstraint(int t, int u)
         {
             Unit unit = PS.Units[u];
-
             var upwardRampingLimitNormal = unit.RampUp * Commit[t, u];
             var upwardRampingLimitStartup = (unit.StartUp - unit.RampUp) * Start[t, u];
             var upwardRampingLimit = upwardRampingLimitNormal + upwardRampingLimitStartup;
-            // Console.ReadLine();
-            //Console.WriteLine("check dit even");
             UpwardRampingConstr[t, u] = Model.AddConstr(P[t, u] - P[t - 1, u] <= upwardRampingLimit, "rampup_" + t + "_" + u);
-            // UpwardRampingConstr[t, u] = Model.AddConstr(Variable.PotentialP[t, u] - Variable.P[t - 1, u] <= upwardRampingLimit, "r" + u + "t" + t);
-
             var downwardRampingLimitNormal = unit.RampDown * Commit[t - 1, u];
             var downwardRampingLimitShutdown = Stop[t, u] * (unit.ShutDown - unit.RampDown);
             var downwardRampingLimit = downwardRampingLimitNormal + downwardRampingLimitShutdown;
@@ -532,10 +499,8 @@ namespace ADMMUC.Solutions
 
         public void AddMinConstraint()
         {
-
             ForEachTimeStepAndGenerator((t, u) => AddMinimumUpTime(t, u));
             ForEachTimeStepAndGenerator((t, u) => AddMinimumDownTime(t, u));
-
         }
 
         private void AddMinimumUpTime(int t, int u)

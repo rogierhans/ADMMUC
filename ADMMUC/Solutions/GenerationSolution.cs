@@ -38,7 +38,6 @@ namespace ADMMUC.Solutions
         public double LR(double[,] Multipliers, int totalTime)
         {
             var LagrangeMultipliers = new double[totalTime];
-            // int totalTime = LagrangeMultipliersLagrangeMultipliers.Count();
             double[] Bmultiplier = new double[totalTime];
             double[] Cmultiplier = new double[totalTime];
             for (int t = 0; t < totalTime; t++)
@@ -49,10 +48,7 @@ namespace ADMMUC.Solutions
             }
             SGUC.SetLM(LagrangeMultipliers.ToList(), Bmultiplier, Cmultiplier);
             var solution = new RRF(SGUC, true).GetSolution();
-
-
             //Check(solution);
-
             return solution.CostADMM;
         }
         static int counter = 0;
@@ -61,7 +57,6 @@ namespace ADMMUC.Solutions
         {
             Substract(Demand);
             var LagrangeMultipliers = new double[totalTime];
-            // int totalTime = LagrangeMultipliersLagrangeMultipliers.Count();
             double[] Bmultiplier = new double[totalTime];
             double[] Cmultiplier = new double[totalTime];
             for (int t = 0; t < totalTime; t++)
@@ -85,6 +80,11 @@ namespace ADMMUC.Solutions
             Add(Demand);
 
             if (!test) return 0;
+            return ExtractForTesting(LagrangeMultipliers, Bmultiplier, Cmultiplier);
+        }
+
+        private double ExtractForTesting(double[] LagrangeMultipliers, double[] Bmultiplier, double[] Cmultiplier)
+        {
             var (gscore, _, _) = G1UC.CalcOptimum();
             if (Math.Abs(gscore - ADMMCost) > 0.001)
             {
@@ -95,8 +95,6 @@ namespace ADMMUC.Solutions
                 Console.WriteLine(Math.Abs(gscore - ADMMCost));
                 G1UC.Print();
                 SGUC.PrintStats();
-
-
                 SGUC.Objective = gscore;
                 SGUC.WriteToFile(@"C:\Users\Rogier\OneDrive - Universiteit Utrecht\1UCTest\Counter\" + (extraCounter++) + ".suc");
             }
@@ -110,7 +108,7 @@ namespace ADMMUC.Solutions
                         DirectoryInfo di = Directory.CreateDirectory(@"C:\Users\Rogier\OneDrive - Universiteit Utrecht\1UCTest\" + Name + @"\");
                     }
                     SGUC.Objective = gscore;
-                    SGUC.WriteToFile(@"C:\Users\Rogier\OneDrive - Universiteit Utrecht\1UCTest\"+ Name + @"\" + (counter++) + ".suc");
+                    SGUC.WriteToFile(@"C:\Users\Rogier\OneDrive - Universiteit Utrecht\1UCTest\" + Name + @"\" + (counter++) + ".suc");
                 }
             }
             return Math.Abs(gscore - ADMMCost);
@@ -163,11 +161,6 @@ namespace ADMMUC.Solutions
             double startCost = solution.Skip(1).Where(step => step.On && step.Tau == 0).Sum(step => UC.StartCost);
             double generationCost = solution.Sum(step => (step.On ? UC.A : 0) + UC.B * step.P + UC.C * step.P * step.P);
             return startCost + generationCost;
-        }
-
-        internal void PrintStats()
-        {
-            SGUC.PrintStats();
         }
     }
 }
