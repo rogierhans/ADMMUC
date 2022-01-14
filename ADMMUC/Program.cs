@@ -14,6 +14,7 @@ namespace ADMMUC;
 
 class Program
 {
+    
     static void Main()
     {
         //{

@@ -33,7 +33,10 @@ public class SUC
     {
         Console.WriteLine("[{0},{1}] +{2}  -{3}   {4}  {5}  {6} {7}", pMin, pMax, RampUp, RampDown, SU, SD, MinUpTime, MinDownTime);
     }
-    public SUC() { }
+    public SUC() {
+        BM = new double[1];
+        CM = new double[1];
+    }
 
     public SUC(double a, double b, double c, double start, int pMax, int pMin, int rampUp, int rampDown, int minUpTime, int minDownTime, int su, int sd, int totalTime)
     {
@@ -81,26 +84,26 @@ public class SUC
 
     public void WriteToFile(string filename)
     {
-        var objects = new List<object>(){
-            Objective,
-            TotalTime,
-            pMax,
-            pMin,
-            RampUp,
-            RampDown,
-            SU,
-            SD,
-            MinDownTime,
-            MinUpTime,
-            StartCost,
-            A,
-            B,
-            C,
+        var objects = new List<string>(){
+            Objective.ToString(),
+            TotalTime.ToString(),
+            pMax.ToString(),
+            pMin.ToString(),
+            RampUp.ToString(),
+            RampDown.ToString(),
+            SU.ToString(),
+            SD.ToString(),
+            MinDownTime.ToString(),
+            MinUpTime.ToString(),
+            StartCost.ToString(),
+            A.ToString(),
+            B.ToString(),
+            C.ToString(),
             string.Join("\t",LagrangeMultipliers),
             string.Join("\t",BM),
             string.Join("\t",CM)
             };
-        File.WriteAllLines(filename, objects.Select(x => x.ToString()).ToList());
+        File.WriteAllLines(filename, objects);
     }
     public static SUC ReadFromFile(string filename)
     {

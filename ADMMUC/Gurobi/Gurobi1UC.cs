@@ -10,28 +10,8 @@ namespace ADMMUC.Solutions
     public class Gurobi1UC
     {
         SUC GQ;
-        public Gurobi1UC(SUC gq) {
+        public Gurobi1UC(SUC gq, bool Relax) {
             GQ = gq;
-            CreateEnv(false);
-        }
-
-
-        public int MaxIntervals = 0;
-        public GRBVar[] P; // time 
-        public GRBVar[] Commit; // time
-        public GRBVar[] Start; // time 
-        public GRBVar[] Stop; // time 
-        private GRBModel Model;
-        private GRBEnv env;
-        GRBModel model;
-        public void Dispose()
-        {
-            model.Dispose();
-        }
-
-        public void CreateEnv(bool Relax)
-        {
-           // Console.WriteLine("???");
             var type = Relax ? GRB.CONTINUOUS : GRB.BINARY;
             env = new GRBEnv();
             model = new GRBModel(env);
@@ -84,6 +64,21 @@ namespace ADMMUC.Solutions
             model.Parameters.TimeLimit = 10;
             model.Parameters.Threads = 1;
         }
+
+
+        public int MaxIntervals = 0;
+        public GRBVar[] P; // time 
+        public GRBVar[] Commit; // time
+        public GRBVar[] Start; // time 
+        public GRBVar[] Stop; // time 
+        private GRBModel Model;
+        private GRBEnv env;
+        GRBModel model;
+        public void Dispose()
+        {
+            model.Dispose();
+        }
+
         public (double, double, double[]) CalcOptimum()
         {
             GRBQuadExpr ob = new GRBQuadExpr();

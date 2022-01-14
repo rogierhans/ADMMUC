@@ -29,7 +29,7 @@ namespace ADMMUC.Solutions
             CurrentDispatchAtTime = new double[time];
             NodeID = nodeID;
             Name = name;
-            G1UC = new Gurobi1UC(SGUC);
+            G1UC = new Gurobi1UC(SGUC,GLOBAL.RelaxGurobi);
         }
         public void Print()
         {

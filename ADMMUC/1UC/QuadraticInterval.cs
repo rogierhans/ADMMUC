@@ -33,7 +33,7 @@ namespace ADMMUC._1UC
 
 
 
-        //
+
         public double MinimumAtInterval()
         {
             if (-B <= From * (2 * C))

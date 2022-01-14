@@ -9,34 +9,23 @@ namespace ADMMUC.Solutions
 {
     class ResolveTrans
     {
-        PowerSystem PS;
         readonly private GRBEnv env = new GRBEnv();
-        GRBModel Model;
+        PowerSystem PS;
 
+        GRBModel Model;
         public GRBVar[,] P; // time x units
-        //public GRBVar[,] PotentialP; // time x units
         public GRBVar[,] RESDispatch; // time x resunits
         public GRBVar[,] Commit; // time x units
         public GRBVar[,] Start; // time x units
         public GRBVar[,] Stop; // time x units
-
         public GRBVar[,] NodalLossOfLoad; //  time
         public GRBVar[,] NodalExcessfLoad;//
-
         public GRBVar[,] TransmissionFlowAC; // lines x time
-                                             //public GRBVar[,] TransmissionFlowDC; // lines x time
-                                             //public GRBVar[,] NodeVoltAngle; // node x time
-                                             //public GRBVar[] LossOfReserve; // node x time
-                                             //public GRBVar[,] NodalLossOfLoad; // node x time
         public GRBVar[,] NodalInjectionAC; // node x time
-                                           //  public GRBVar[,] NodalInjectionDC; // node x time
         protected int totalNodes;
         protected int totalTime;
         protected int totalUnits;
         protected int totalLinesAC;
-        // protected int totalLinesDC;
-
-        // protected int totalInflows;
         protected int totalRES;
         readonly bool RESOLVE = true;
 
@@ -61,13 +50,11 @@ namespace ADMMUC.Solutions
             AddObjective();
             Console.WriteLine("AddingGenConstraints");
             AddGenerationConstraint();
-
             AddLogicConstraint();
             Console.WriteLine("AddingBalanceConstraints");
             AddBalanceConstraint();
             Console.WriteLine("AddRampingConstraints");
             AddRampingConstraints();
-
             AddTransmissionConstraints();
             AddMinConstraint();
             if (forResolve)

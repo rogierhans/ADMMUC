@@ -625,7 +625,7 @@ namespace ADMMUC.Solutions
             Console.WriteLine("%%%%%%%%%%%%%%%%%%%%%%%%%%%%Demand");
         }
 
-        public double[,] Demand;
+        public double[,] Demand = new double[1, 1];
         public double[,] GetDemand2()
         {
             for (int n = 0; n < totalNodes; n++)
