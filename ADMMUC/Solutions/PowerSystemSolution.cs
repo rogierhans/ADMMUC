@@ -9,6 +9,7 @@ using System.Diagnostics;
 
 namespace ADMMUC.Solutions
 {
+
     public class PowerSystemSolution
     {
         protected readonly PowerSystem PowerSystem;
@@ -24,7 +25,7 @@ namespace ADMMUC.Solutions
         readonly protected double RhoMultiplier;
         readonly protected double multiplierMultiplier;
         readonly protected int rhoUpdateCounter;
-        // readonly ResolveTrans Resolve;
+        readonly ResolveTrans Resolve;
         public PowerSystemSolution(string fileName, int totalTime, double rho, double rhoMultiplier, int rhoUpdateCounter, double multiplierMultiplier)
         {
 
@@ -42,10 +43,10 @@ namespace ADMMUC.Solutions
             this.multiplierMultiplier = multiplierMultiplier;
 
             SetMultipliers();
-            CreateGenerationSolution(totalTime,fileName.Split('\\').Last().Split('.').First());
+            CreateGenerationSolution(totalTime, fileName.Split('\\').Last().Split('.').First());
             TSolution = new ADMMTrans(PowerSystem, totalTime);
             CreateResSolutions(totalTime);
-            //  Resolve = new ResolveTrans(PowerSystem, totalTime, true, false);
+          //  Resolve = new ResolveTrans(PowerSystem, totalTime, true, false);
             this.rhoUpdateCounter = rhoUpdateCounter;
         }
 
@@ -57,7 +58,7 @@ namespace ADMMUC.Solutions
                 for (int n = 0; n < totalNodes; n++)
                 {
                     var node = PowerSystem.Nodes[n];
-                    NodeMultipliers[n, t] = node.UnitsIndex.Count == 0 ? 0 : node.UnitsIndex.Max(x => PowerSystem.Units[x].B);
+                    NodeMultipliers[n, t] =  node.UnitsIndex.Count == 0 ? 0 : node.UnitsIndex.Average(x => PowerSystem.Units[x].B);
                 }
             }
         }
@@ -83,12 +84,20 @@ namespace ADMMUC.Solutions
             while (i++ < maxIterations && !Converged())
             {
                 Go(rhoUpdateCounter);
+                if (i % 100 == 0 && GSolutions.Sum(g => g.ReevalCost) > 1)
+                {
+                    if (GLOBAL.ResolveInteration)
+                    {
+
+                        ResolveSolutionWithMILP();
+                    }
+                }
             }
 
             FinalIteration = i;
             FinalScore = GSolutions.Sum(g => g.ReevalCost);
-            // Resolve.KILL();
-            // GSolutions.ToList().ForEach(x => x.GurobiDispose());
+          //  Resolve.KILL();
+            //GSolutions.ToList().ForEach(x => x.GurobiDispose());
             bool Converged()
             {
                 if ((GSolutions.Sum(g => g.ReevalCost) > 100 && AbsoluteResidualLoad() < 0.001) && ConvergedObjective())
@@ -119,6 +128,8 @@ namespace ADMMUC.Solutions
 
         public virtual void Go(int rhoUpdateCounter)
         {
+          //  Console.WriteLine(GSolutions.Sum(g => g.ReevalCost) + " " + AbsoluteResidualLoad() + " " + Rho);
+            //PrintMultipliers();
             var CurrentDemand = GetDemand();
             foreach (var g in Enumerable.Range(0, RSolutions.Length).OrderBy(i => RNG.NextDouble()).ToList())
             {
@@ -242,59 +253,71 @@ namespace ADMMUC.Solutions
             }
             return Demand;
         }
+
+
+
+        //private double LRReeval()
+        //{
+        //    double cost = 0;
+        //    foreach (var g in Enumerable.Range(0, GSolutions.Length).OrderBy(i => RNG.NextDouble()).ToList())
+        //    {
+        //        cost += GSolutions[g].LR(NodeMultipliers, totalTime);
+        //    }
+        //    // Console.WriteLine(cost);
+        //    for (int t = 0; t < totalTime; t++)
+        //    {
+        //        for (int n = 0; n < totalNodes; n++)
+        //        {
+        //            cost += NodeMultipliers[n, t] * PowerSystem.Nodes[n].NodalDemand(t);
+        //        }
+        //    }
+        //    // Console.WriteLine(cost);
+        //    for (int t = 0; t < totalTime; t++)
+        //    {
+        //        //    cost += TSolutions[t].LR(NodeMultipliers);
+        //    }
+        //    foreach (var g in Enumerable.Range(0, RSolutions.Length).OrderBy(i => RNG.NextDouble()).ToList())
+        //    {
+
+        //        cost += RSolutions[g].LR(NodeMultipliers, totalTime);
+        //    }
+        //    return cost;
+        //}
+
+        //public double FinalResolveTime;
+        //public double FinalResolveScore;
+        private void PrintMultipliers() {
+
+            for (int n = 0; n < totalNodes; n++)
+            {
+                List<double> multies = new List<double>();
+                for (int t = 0; t < totalTime; t++)
+                {
+                    multies.Add(Math.Round(NodeMultipliers[n, t],1));
+                }
+                Console.WriteLine(String.Join("\t",multies));
+                //Console.ReadLine();
+            }
+        }
+
+        private double ResolveSolutionWithMILP()
+        {
+            var commits = new int[totalTime, totalUnits];
+            var Ps = new double[totalTime, totalUnits];
+            for (int t = 0; t < totalTime; t++)
+            {
+                for (int g = 0; g < totalUnits; g++)
+                {
+                    commits[t, g] = GSolutions[g].OldSolution.Steps[t].On ? 1 : 0;
+                    Ps[t, g] = GSolutions[g].CurrentDispatchAtTime[t];
+                }
+            }
+
+            (double val, double ms, double cost, double lol) = Resolve.Solve(commits);
+            Console.WriteLine("RESOLVE "+ val + " " + cost + " " + lol);
+            return val;
+        }
     }
-
-
-    //private double LRReeval()
-    //{
-    //    double cost = 0;
-    //    foreach (var g in Enumerable.Range(0, GSolutions.Length).OrderBy(i => RNG.NextDouble()).ToList())
-    //    {
-    //        cost += GSolutions[g].LR(NodeMultipliers, totalTime);
-    //    }
-    //    // Console.WriteLine(cost);
-    //    for (int t = 0; t < totalTime; t++)
-    //    {
-    //        for (int n = 0; n < totalNodes; n++)
-    //        {
-    //            cost += NodeMultipliers[n, t] * PowerSystem.Nodes[n].NodalDemand(t);
-    //        }
-    //    }
-    //    // Console.WriteLine(cost);
-    //    for (int t = 0; t < totalTime; t++)
-    //    {
-    //        //    cost += TSolutions[t].LR(NodeMultipliers);
-    //    }
-    //    foreach (var g in Enumerable.Range(0, RSolutions.Length).OrderBy(i => RNG.NextDouble()).ToList())
-    //    {
-
-    //        cost += RSolutions[g].LR(NodeMultipliers, totalTime);
-    //    }
-    //    return cost;
-    //}
-
-    //public double FinalResolveTime;
-    //public double FinalResolveScore;
-
-    //private double ResolveSolutionWithMILP()
-    //{
-    //    var commits = new int[totalTime, totalUnits];
-    //    var Ps = new double[totalTime, totalUnits];
-    //    for (int t = 0; t < totalTime; t++)
-    //    {
-    //        for (int g = 0; g < totalUnits; g++)
-    //        {
-    //            commits[t, g] = GSolutions[g].OldSolution.Steps[t].On ? 1 : 0;
-    //            Ps[t, g] = GSolutions[g].CurrentDispatchAtTime[t];
-    //        }
-    //    }
-
-    //    (double val, double ms, double cost, double lol) = Resolve.Solve(commits);
-    //    FinalResolveTime = ms / 1000;
-    //    FinalResolveScore = val;
-    //    Console.WriteLine(val + " " + cost + " " + lol);
-    //    return val;
-    //}
 
     //private void Check()
     //{

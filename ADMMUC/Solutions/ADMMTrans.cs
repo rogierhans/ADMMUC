@@ -68,6 +68,7 @@ namespace ADMMUC.Solutions
                     Bs[n] = (LagrangeMultipliers[n, t] + rho * Demand[n, t]);
                     Cs[n] = 0.5 * rho;
                 }
+               // Console.WriteLine(t);
                 total += TransSubproblem[t].Calculate(Bs, Cs);
             }
             return total;

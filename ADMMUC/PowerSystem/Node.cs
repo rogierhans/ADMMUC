@@ -34,7 +34,7 @@ namespace ADMMUC
         public void PeturbDemand(Random RNG, double factor)
         {
             if (Demands != null)
-                for (int t = 0; t < Demands.Count(); t++)
+                for (int t = 0; t < Demands.Count; t++)
                 {
                     double demand = Demands[t];
                     double range = demand / factor;

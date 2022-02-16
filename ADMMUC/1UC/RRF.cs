@@ -22,7 +22,7 @@ namespace ADMMUC._1UC
         public SUCSolution GetSolution()
         {
             FillInDP();
-            int t = UC.LagrangeMultipliers.Count() - 1;
+            int t = UC.LagrangeMultipliers.Count - 1;
             double bestValue = double.MaxValue;
             int bestTau = int.MaxValue;
             bool On = false;

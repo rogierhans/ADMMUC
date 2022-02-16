@@ -456,7 +456,7 @@ namespace ADMMUC.Solutions
         private GRBLinExpr NodalGeneration(int n, int t)
         {
             var totalGeneration = new GRBLinExpr();
-            PS.Nodes[n].UnitsIndex.Take(PS.Nodes[n].UnitsIndex.Count() - (RESOLVE ? 1 : 0)).ToList().ForEach(g =>
+            PS.Nodes[n].UnitsIndex.Take(PS.Nodes[n].UnitsIndex.Count- (RESOLVE ? 1 : 0)).ToList().ForEach(g =>
                  {
                      totalGeneration += P[t, g];
                  });

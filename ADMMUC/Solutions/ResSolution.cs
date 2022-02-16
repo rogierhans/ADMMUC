@@ -16,13 +16,12 @@ namespace ADMMUC.Solutions
         {
             NodeID = node;
             MaxDisptach = maxDisptach;
-            TotalDispatchHorizon = maxDisptach.Count();
+            TotalDispatchHorizon = maxDisptach.Length;
             Dispatch = new double[totaltime];
         }
         public void Reevaluate(double[,] Multipliers, double[,] Demand, double rho, int totalTime)
         {
             Substract(Demand);
-            var LagrangeMultipliers = new double[totalTime];
             for (int t = 0; t < totalTime; t++)
             {
                 var B = -Multipliers[NodeID, t] + rho * -Demand[NodeID, t];
@@ -61,14 +60,14 @@ namespace ADMMUC.Solutions
         }
         private void Substract(double[,] Demand)
         {
-            for (int t = 0; t < Dispatch.Count(); t++)
+            for (int t = 0; t < Dispatch.Length; t++)
             {
                 Demand[NodeID, t] = Demand[NodeID, t] + Dispatch[t];
             }
         }
         private void Add(double[,] Demand)
         {
-            for (int t = 0; t < Dispatch.Count(); t++)
+            for (int t = 0; t < Dispatch.Length; t++)
             {
                 Demand[NodeID, t] = Demand[NodeID, t] - Dispatch[t];
             }

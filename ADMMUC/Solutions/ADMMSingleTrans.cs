@@ -9,10 +9,13 @@ namespace ADMMUC.Solutions
 {
     class ADMMSingleTrans
     {
+        // public double OtherScore = 0;
+        //public List<double> OtherExport;
         readonly int T;
-        readonly List<TransmissionLine> Lines;
-        readonly PowerSystem PS;
-        readonly int totalNodes;
+        List<TransmissionLine> Lines;
+        // public double[] CurrentExport;
+        PowerSystem PS;
+        int totalNodes;
 
         public ADMMSingleTrans(PowerSystem ps, int t)
         {
@@ -34,27 +37,31 @@ namespace ADMMUC.Solutions
             }
         }
 
-        readonly public double[] flows;
-        readonly public double[] export;
-        readonly public double[] exportMin;
-        readonly public double[] exportMax;
-        readonly public double[] FlowTotal;
+        double[] flows;
+        public double[] export;
+        public double[] exportMin;
+        public double[] exportMax;
+        public double[] FlowTotal;
 
 
-
-
-        readonly  double[] Lagrange;
-        public double rho = 1;
+        double[] Lagrange;
+        public double rho = 0.001;
         public double Calculate(double[] Bs, double[] Cs)
         {
-            double currentValue = Iteration(Bs, Cs);
+
+            double currentValue = 0;
+            rho = Math.Max(rho, 1);
+            currentValue = Iteration(Bs, Cs);
+
             while ((ResidualLoad() > 0.000001 || rho > 1) && ResidualLoad() > 0.01)// && counter++< 30)
             {
+                //Console.WriteLine("{0} {1} {2}", currentValue, ResidualLoad(), rho);
                 for (int n = 0; n < totalNodes; n++)
                 {
                     Lagrange[n] = Lagrange[n] + (export[n] - FlowTotal[n]) * rho;
                 }
                 currentValue = Iteration(Bs, Cs);
+                //  Console.WriteLine("{0} {1} {2}", currentValue, ResidualLoad(), rho);
             }
             return currentValue;
         }
@@ -79,7 +86,7 @@ namespace ADMMUC.Solutions
             return total;
         }
 
-        readonly Random rng = new ();
+        Random rng = new Random();
         private double[] RandomMultipliers()
         {
             double[] Lagrange = new double[totalNodes];
@@ -95,6 +102,7 @@ namespace ADMMUC.Solutions
         private double Iteration(double[] Bs, double[] Cs)
         {
             double value = 0;
+            // GRBQuadExpr objective = 0;
             for (int l = 0; l < Lines.Count; l++)
             {
                 var line = Lines[l];
@@ -115,10 +123,16 @@ namespace ADMMUC.Solutions
                 value += (Bs[n] + Lagrange[n]) * export[n] + Cs[n] * export[n] * export[n];
                 value += -Lagrange[n] * FlowTotal[n];
             }
+
+            //model.SetObjective(objective, GRB.MINIMIZE);
+            //model.Optimize();
+            //value += objective.Value;
+
+
             return value;
         }
 
-        public static double MinimumAtInterval(double B, double C, double min, double max)
+        public double MinimumAtInterval(double B, double C, double min, double max)
         {
             if (C == 0)
             {
@@ -131,6 +145,40 @@ namespace ADMMUC.Solutions
             if (minimum < min) return min;
             else if (minimum > max) return max;
             else return minimum;
+        }
+
+
+
+        public void PrintFlows()
+        {
+            for (int n = 0; n < totalNodes; n++)
+            {
+                Console.WriteLine(export[n]);
+            }
+            //   Console.WriteLine(string.Join("\t", export));
+        }
+        public void Print()
+        {
+            string line = "";
+            for (int n = 0; n < totalNodes; n++)
+            {
+                line += "\t" + ((export[n] - FlowTotal[n]));
+            }
+            Console.WriteLine(line);
+
+            line = "";
+            for (int n = 0; n < totalNodes; n++)
+            {
+                line += "\t" + Math.Round(Lagrange[n]);
+            }
+            Console.WriteLine(line);
+
+            line = "";
+            for (int n = 0; n < totalNodes; n++)
+            {
+                line += "\t" + Math.Round(export[n]);
+            }
+            Console.WriteLine(line);
         }
     }
 }

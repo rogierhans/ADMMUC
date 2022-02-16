@@ -12,10 +12,10 @@ namespace ADMMUC._1UC
         public int Tau;
         public bool On;
         public double P;
-        public F? F;
+        public F F;
         public double Value;
 
-        public DPQSolution(int t, int tau, bool on, double p, F? f, double value)
+        public DPQSolution(int t, int tau, bool on, double p, F f, double value)
         {
             T = t;
             Tau = tau;

@@ -3,13 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.IO;
+using ADMMUC.Solutions;
 using ADMMUC._1UC;
-
-namespace ADMMUC.Solutions
+namespace ADMMUC.Linear1UC
 {
-    [Serializable]
-    public class GenerationSolution
+    public class LinearGenerationSolution
     {
         readonly int NodeID;
 
@@ -18,18 +16,17 @@ namespace ADMMUC.Solutions
         public double ADMMCost;
         public SUC SGUC;
         public double[] CurrentDispatchAtTime;
-        public SUCSolution OldSolution;
         // readonly bool DebugCheck = true;
         private Gurobi1UC G1UC;
 
         private string Name;
-        public GenerationSolution(SUC SGUC, int time, int nodeID, string name)
+        public LinearGenerationSolution(SUC SGUC, int time, int nodeID, string name)
         {
             this.SGUC = SGUC;
             CurrentDispatchAtTime = new double[time];
             NodeID = nodeID;
             Name = name;
-           // G1UC = new Gurobi1UC(SGUC,GLOBAL.RelaxGurobi);
+            // G1UC = new Gurobi1UC(SGUC,GLOBAL.RelaxGurobi);
         }
         public void Print()
         {
@@ -76,7 +73,6 @@ namespace ADMMUC.Solutions
             {
                 CurrentDispatchAtTime[t] = solution.Steps[t].P;
             }
-            OldSolution = solution;
             Add(Demand);
 
             if (!test) return 0;
