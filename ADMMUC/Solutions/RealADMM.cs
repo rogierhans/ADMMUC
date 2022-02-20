@@ -42,6 +42,7 @@ namespace ADMMUC.Solutions
             CreateTransmissionSolution(totalTime);
             CreateResSolutions(totalTime);
             Resolve = new ResolveTrans(PowerSystem, totalTime, true, false);
+            Console.WriteLine("Done");
             this.rhoUpdateCounter = rhoUpdateCounter;
         }
 
@@ -53,7 +54,7 @@ namespace ADMMUC.Solutions
                 for (int n = 0; n < totalNodes; n++)
                 {
                     var node = PowerSystem.Nodes[n];
-                    NodeMultipliers[n, t] = node.UnitsIndex.Count == 0 ? 0 : node.UnitsIndex.Max(x => PowerSystem.Units[x].B);
+                    NodeMultipliers[n, t] = node.UnitsIndex.Count == 0 ? 0 : node.UnitsIndex.Average(x => PowerSystem.Units[x].B);
                 }
             }
         }
@@ -129,6 +130,8 @@ namespace ADMMUC.Solutions
         List<double> Values = new List<double>();
         public void Go(int rhoUpdateCounter)
         {
+            Console.WriteLine(GSolutions.Sum(g => g.ReevalCost) + " " + ResidualLoad() + " " + Rho + " " + GetDemand().Flat().Select(x => Math.Abs(x)).Average() + " " + GetDemand().Flat().Select(x => Math.Abs(x)).Max());
+
             var CurrentDemand = GetDemand();
             foreach (var g in Enumerable.Range(0, RSolutions.Length).OrderBy(i => RNG.NextDouble()).ToList())
             {

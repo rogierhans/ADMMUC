@@ -16,16 +16,17 @@ class Program
 {
     static void Main()
     {
+
         //List<double> scores = new List<double>();
-        //foreach (var (key, (na, bl, score)) in GetRhoAndStuff())
-        //{
-        //    Console.WriteLine("{0} {1} {2} {3}", key, na, bl, score);
-        //    scores.Add(score);
-        //}
+        foreach (var (key, (na, bl, score)) in GetRhoAndStuff())
+        {
+            Console.WriteLine("{0} {1} {2} {3}", key[..3], na, bl, score);
+        }
+        Test();
         //Console.WriteLine(scores.Average());
-        //CreateMILPs();
+        // CreateMILPs();
         // return;
-        RhoIncreaseTest();
+        // RhoIncreaseTest();
         //var filename = @"C:\Users\Rogier\Google Drive\Data\Github\" + "GA10.uc";
         //int totalTime = 24;
         //var rhoUpdate = 1.1;
@@ -91,8 +92,8 @@ class Program
     private static void CreateMILPs()
     {
         var fileNames = new DirectoryInfo(@"C:\Users\Rogier\Google Drive\Data\Github\").GetFiles();
-        int totalTime = 48;
-        foreach (var filename in fileNames.Skip(fileNames.Count() - 1))
+        int totalTime = 24 * 5;
+        foreach (var filename in fileNames)
         {
 
             var ConstraintConfiguration = new ConstraintConfiguration(false, false, "", false, false, false, 1);
@@ -106,44 +107,46 @@ class Program
     private static void Test()
     {
         var fileNames = new DirectoryInfo(@"C:\Users\Rogier\Google Drive\Data\Github\").GetFiles();
-        int totalTime = 24;
+        //  int totalTime = 24;
         var SW = new Stopwatch();
         double rho = 0.00001;
         var dict = GetRhoAndStuff();
 
-
-
-        foreach (var filething in fileNames)
+        foreach (var filething in fileNames.Skip(2))
         {
-
-            double alpha = dict[filething.Name].Item1;
-            int count = dict[filething.Name].Item2;
-            string id = string.Format("({0},{1},{2})", alpha, rho, count);
-            //Console.WriteLine(id);  
-
-            //  if (filename.Name != "RTS54.uc") continue;
-            var filenameScore = @"C:\Users\" + Environment.UserName + @"\OneDrive - Universiteit Utrecht\UCSolutionOptimalScores\" + totalTime + @"\" + filething.Name;
-
-            List<(double, double, double)> MILPSnaps = File.ReadAllLines(filenameScore).Select(x =>
+            foreach (var totalTime in new List<int>() { 24 * 5 })
             {
-                var input = x.Split('\t').Take(3).Select(double.Parse).ToList();
-                return (input[0], input[1], input[2]);
-            }).ToList();
-            SW.Restart();
-            var test = new PowerSystemSolution(filething.FullName, totalTime, rho, alpha, count, 1);
-            test.RunIterations(10000);
-            var time = (SW.Elapsed.TotalMilliseconds / 1000);
-            var score = test.GetScore();
 
-            var ratio = GetScore(MILPSnaps, time, score);
-            var optRatio = GetObjectiveRatio(MILPSnaps, score);
-            Console.WriteLine("{0} {1} {2} {3} {4}", filething.Name, time, score, ratio, optRatio);
-            score = test.FinalScore;
+                double alpha = dict[filething.Name].Item1;
+                int count = dict[filething.Name].Item2;
+                string id = string.Format("({0},{1},{2})", alpha, rho, count);
+                //Console.WriteLine(id);  
 
-           // ratio = GetScore(MILPSnaps, time, score);
-            //optRatio = GetObjectiveRatio(MILPSnaps, score);
-           // Console.WriteLine("{0} {1} {2} {3} {4}", filething.Name, time, score, ratio, optRatio);
-           // Console.ReadLine();
+                if (filething.Name != "RTS54.uc") continue;
+                var filenameScore = @"C:\Users\" + Environment.UserName + @"\OneDrive - Universiteit Utrecht\UCSolutionOptimalScores\" + totalTime + @"\" + filething.Name;
+
+                List<(double, double, double)> MILPSnaps = File.ReadAllLines(filenameScore).Select(x =>
+                {
+                    var input = x.Split('\t').Take(3).Select(double.Parse).ToList();
+                    return (input[0], input[1], input[2]);
+                }).ToList();
+                SW.Restart();
+                var test = new RealADMM(filething.FullName, totalTime, rho, alpha, count, 1);
+                test.WriteAlgorithmToFile(10000);
+                var time = (SW.Elapsed.TotalMilliseconds / 1000);
+                var score = test.GetScore();
+
+                var ratio = GetScore(MILPSnaps, time, score);
+                var optRatio = GetObjectiveRatio(MILPSnaps, score);
+                Console.WriteLine("{0} {1} {2} {3} {4}", filething.Name[..3], Math.Round(time, 1), score, ratio, optRatio);
+                score = test.FinalScore;
+
+                // ratio = GetScore(MILPSnaps, time, score);
+                //optRatio = GetObjectiveRatio(MILPSnaps, score);
+                // Console.WriteLine("{0} {1} {2} {3} {4}", filething.Name, time, score, ratio, optRatio);
+                // Console.ReadLine();
+            }
+            Console.WriteLine();
         }
     }
 
@@ -154,7 +157,7 @@ class Program
         var SW = new Stopwatch();
 
 
-        foreach (var rho in new List<double> { 0.00001 })
+        foreach (var rho in new List<double> { 0.000001 })
         {
             for (double rhoUpdate = 1.01; rhoUpdate <= 1.1; rhoUpdate += 0.01)
             {

@@ -52,9 +52,10 @@ namespace ADMMUC.Solutions
             double currentValue = 0;
             rho = Math.Max(rho, 1);
             currentValue = Iteration(Bs, Cs);
-
-            while ((ResidualLoad() > 0.000001 || rho > 1) && ResidualLoad() > 0.01)// && counter++< 30)
+            int counter = 0;
+            while ((ResidualLoad() > 0.000001 || rho > 1) && ResidualLoad() > 0.01 || counter++< 30)
             {
+               
                 //Console.WriteLine("{0} {1} {2}", currentValue, ResidualLoad(), rho);
                 for (int n = 0; n < totalNodes; n++)
                 {

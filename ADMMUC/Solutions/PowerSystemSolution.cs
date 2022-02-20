@@ -46,7 +46,8 @@ namespace ADMMUC.Solutions
             CreateGenerationSolution(totalTime, fileName.Split('\\').Last().Split('.').First());
             TSolution = new ADMMTrans(PowerSystem, totalTime);
             CreateResSolutions(totalTime);
-          //  Resolve = new ResolveTrans(PowerSystem, totalTime, true, false);
+            if (GLOBAL.ResolveInteration)
+                Resolve = new ResolveTrans(PowerSystem, totalTime, true, false);
             this.rhoUpdateCounter = rhoUpdateCounter;
         }
 
@@ -58,7 +59,7 @@ namespace ADMMUC.Solutions
                 for (int n = 0; n < totalNodes; n++)
                 {
                     var node = PowerSystem.Nodes[n];
-                    NodeMultipliers[n, t] =  node.UnitsIndex.Count == 0 ? 0 : node.UnitsIndex.Average(x => PowerSystem.Units[x].B);
+                    NodeMultipliers[n, t] = node.UnitsIndex.Count == 0 ? 0 : node.UnitsIndex.Average(x => PowerSystem.Units[x].B);
                 }
             }
         }
@@ -84,6 +85,8 @@ namespace ADMMUC.Solutions
             while (i++ < maxIterations && !Converged())
             {
                 Go(rhoUpdateCounter);
+                LogRL();
+                //CheckNodes();
                 if (i % 100 == 0 && GSolutions.Sum(g => g.ReevalCost) > 1)
                 {
                     if (GLOBAL.ResolveInteration)
@@ -96,7 +99,7 @@ namespace ADMMUC.Solutions
 
             FinalIteration = i;
             FinalScore = GSolutions.Sum(g => g.ReevalCost);
-          //  Resolve.KILL();
+            //  Resolve.KILL();
             //GSolutions.ToList().ForEach(x => x.GurobiDispose());
             bool Converged()
             {
@@ -128,7 +131,7 @@ namespace ADMMUC.Solutions
 
         public virtual void Go(int rhoUpdateCounter)
         {
-          //  Console.WriteLine(GSolutions.Sum(g => g.ReevalCost) + " " + AbsoluteResidualLoad() + " " + Rho);
+            Console.WriteLine(GSolutions.Sum(g => g.ReevalCost) + " " + AbsoluteResidualLoad() + " " + Rho + " " + GetDemand().Flat().Select(x => Math.Abs(x)).Average() + " " + GetDemand().Flat().Select(x => Math.Abs(x)).Max());
             //PrintMultipliers();
             var CurrentDemand = GetDemand();
             foreach (var g in Enumerable.Range(0, RSolutions.Length).OrderBy(i => RNG.NextDouble()).ToList())
@@ -256,6 +259,8 @@ namespace ADMMUC.Solutions
 
 
 
+
+
         //private double LRReeval()
         //{
         //    double cost = 0;
@@ -286,16 +291,17 @@ namespace ADMMUC.Solutions
 
         //public double FinalResolveTime;
         //public double FinalResolveScore;
-        private void PrintMultipliers() {
+        private void PrintMultipliers()
+        {
 
             for (int n = 0; n < totalNodes; n++)
             {
                 List<double> multies = new List<double>();
                 for (int t = 0; t < totalTime; t++)
                 {
-                    multies.Add(Math.Round(NodeMultipliers[n, t],1));
+                    multies.Add(Math.Round(NodeMultipliers[n, t], 1));
                 }
-                Console.WriteLine(String.Join("\t",multies));
+                Console.WriteLine(String.Join("\t", multies));
                 //Console.ReadLine();
             }
         }
@@ -314,8 +320,56 @@ namespace ADMMUC.Solutions
             }
 
             (double val, double ms, double cost, double lol) = Resolve.Solve(commits);
-            Console.WriteLine("RESOLVE "+ val + " " + cost + " " + lol);
+            Console.WriteLine("RESOLVE " + val + " " + cost + " " + lol);
             return val;
+        }
+
+        private void LogRL()
+        {
+            if (AbsoluteResidualLoad() > 1000) return;
+
+            var RL = GetDemand();
+
+            List<object> list = new List<object>();
+            for (int n = 0; n < totalNodes; n++)
+            {
+                var genSolutions = PowerSystem.Nodes[n].UnitsIndex.Select(g => GSolutions[g]);
+                var resSolutions = PowerSystem.Nodes[n].RESindex.Select(g => RSolutions[g]);
+                for (int t = 0; t < totalTime; t++)
+                {
+                    if (Math.Abs(RL[n, t]) > 0.1)
+                    {
+
+                        var totalRES = RSolutions.Sum(x => x.Dispatch[t]);
+                        var gen = genSolutions.Sum(g => g.CurrentDispatchAtTime[t]);
+                        var res = resSolutions.Sum(g => g.Dispatch[t]);
+                        var export = TSolution.CurrentExport[n, t];
+                        var demand = PowerSystem.Nodes[n].NodalDemand(t);
+
+                        var lsit = new List<double>() {t, RL[n, t], gen, res, export, demand, totalRES };
+                        list.Add("("+string.Join(",",lsit.Select(x => Math.Round(x,2)))+")");
+                    }
+                }
+            }
+            File.AppendAllText(@"C:\Users\Rogier\Desktop\RLLog.txt", String.Join("\t", list) + "\n");
+        }
+
+        private void CheckNodes()
+        {
+            var RL = GetDemand();
+            var HS = new HashSet<int>();
+            for (int n = 0; n < totalTime; n++)
+            {
+                for (int t = 0; t < totalTime; t++)
+                {
+                    if (Math.Abs(RL[n, t]) > 1)
+                    {
+
+                        HS.Add(n);
+                    }
+                }
+            }
+            Console.WriteLine(String.Join("\t", HS));
         }
     }
 
