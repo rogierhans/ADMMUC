@@ -53,7 +53,7 @@ namespace ADMMUC.Solutions
             rho = Math.Max(rho, 1);
             currentValue = Iteration(Bs, Cs);
             int counter = 0;
-            while ((ResidualLoad() > 0.000001 || rho > 1) && ResidualLoad() > 0.01 || counter++< 30)
+            while (((ResidualLoad() > 0.000001 || rho > 1) && ResidualLoad() > 0.01 ))
             {
                
                 //Console.WriteLine("{0} {1} {2}", currentValue, ResidualLoad(), rho);
@@ -120,7 +120,7 @@ namespace ADMMUC.Solutions
             for (int n = 0; n < totalNodes; n++)
             {
                 export[n] = 0;
-                export[n] = MinimumAtInterval(Bs[n] + Lagrange[n] - (rho * FlowTotal[n]), Cs[n] + rho / 2, exportMin[n], exportMax[n]);
+                export[n] = MinimumAtInterval(Bs[n] + Lagrange[n] - (rho * FlowTotal[n]), Cs[n] + rho / 2, exportMin[n] , exportMax[n]);
                 value += (Bs[n] + Lagrange[n]) * export[n] + Cs[n] * export[n] * export[n];
                 value += -Lagrange[n] * FlowTotal[n];
             }

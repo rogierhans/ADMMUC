@@ -149,7 +149,8 @@ namespace ADMMUC.Solutions
             if (PowerSystem.Nodes.Count > 1)
             {
                 SWTrans.Start();
-                TSolutions.Reevaluate(NodeMultipliers, CurrentDemand.Clone() as double[,], Rho);
+                throw new Exception(); // need to solve it for the added bullshit
+               // TSolutions.Reevaluate(NodeMultipliers, CurrentDemand.Clone() as double[,], Rho);
                 SWTrans.Stop();
             }
             UpdateMultiplers(Rho);

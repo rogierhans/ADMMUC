@@ -85,7 +85,7 @@ namespace ADMMUC.Solutions
             while (i++ < maxIterations && !Converged())
             {
                 Go(rhoUpdateCounter);
-                LogRL();
+               // LogRL();
                 //CheckNodes();
                 if (i % 100 == 0 && GSolutions.Sum(g => g.ReevalCost) > 1)
                 {
@@ -131,13 +131,9 @@ namespace ADMMUC.Solutions
 
         public virtual void Go(int rhoUpdateCounter)
         {
-            Console.WriteLine(GSolutions.Sum(g => g.ReevalCost) + " " + AbsoluteResidualLoad() + " " + Rho + " " + GetDemand().Flat().Select(x => Math.Abs(x)).Average() + " " + GetDemand().Flat().Select(x => Math.Abs(x)).Max());
-            //PrintMultipliers();
+          // Console.WriteLine(GSolutions.Sum(g => g.ReevalCost) + " " + AbsoluteResidualLoad() + " " + Rho + " " + GetDemand().Flat().Select(x => Math.Abs(x)).Average() + " " + GetDemand().Flat().Select(x => Math.Abs(x)).Max());
+
             var CurrentDemand = GetDemand();
-            foreach (var g in Enumerable.Range(0, RSolutions.Length).OrderBy(i => RNG.NextDouble()).ToList())
-            {
-                RSolutions[g].Reevaluate(NodeMultipliers, CurrentDemand, Rho, totalTime);
-            }
             foreach (var g in Enumerable.Range(0, GSolutions.Length).OrderBy(i => RNG.NextDouble()).ToList())
             {
                 if (GLOBAL.UseGurobi)
@@ -148,6 +144,10 @@ namespace ADMMUC.Solutions
                     Deltas.Add(delta);
 
                 }
+            }
+            foreach (var g in Enumerable.Range(0, RSolutions.Length).OrderBy(i => RNG.NextDouble()).ToList())
+            {
+                RSolutions[g].Reevaluate(NodeMultipliers, CurrentDemand, Rho, totalTime);
             }
             if (PowerSystem.Nodes.Count > 1)
             {
@@ -172,6 +172,20 @@ namespace ADMMUC.Solutions
             {
                 RSolutions[r] = new ResSolution(PowerSystem.Res[r].ResValues.ToList().Take(totalTime).ToArray(), PowerSystem.Nodes.First(n => n.RESindex.Contains(r)).ID, totalTime);
             }
+        }
+
+        private double[,] GetGenerationAtNode()
+        {
+            double[,] generation = new double[totalNodes, totalTime];
+            for (int n = 0; n < totalNodes; n++)
+            {
+                var genSolutions = PowerSystem.Nodes[n].UnitsIndex.Select(g => GSolutions[g]);
+                for (int t = 0; t < totalTime; t++)
+                {
+                    generation[n, t] = genSolutions.Sum(g => (g.OldSolution.Steps[t].On?1:0) * g.SGUC.pMin);
+                }
+            }
+            return generation;
         }
 
         protected void CreateGenerationSolution(int totalTime, string name)
@@ -346,8 +360,8 @@ namespace ADMMUC.Solutions
                         var export = TSolution.CurrentExport[n, t];
                         var demand = PowerSystem.Nodes[n].NodalDemand(t);
 
-                        var lsit = new List<double>() {t, RL[n, t], gen, res, export, demand, totalRES };
-                        list.Add("("+string.Join(",",lsit.Select(x => Math.Round(x,2)))+")");
+                        var lsit = new List<double>() { t, RL[n, t], gen, res, export, demand, totalRES };
+                        list.Add("(" + string.Join(",", lsit.Select(x => Math.Round(x, 2))) + ")");
                     }
                 }
             }

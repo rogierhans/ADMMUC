@@ -22,11 +22,11 @@ class Program
         {
             Console.WriteLine("{0} {1} {2} {3}", key[..3], na, bl, score);
         }
-        Test();
+        //Test();
         //Console.WriteLine(scores.Average());
-        // CreateMILPs();
+         CreateMILPs();
         // return;
-        // RhoIncreaseTest();
+       //  RhoIncreaseTest();
         //var filename = @"C:\Users\Rogier\Google Drive\Data\Github\" + "GA10.uc";
         //int totalTime = 24;
         //var rhoUpdate = 1.1;
@@ -92,7 +92,7 @@ class Program
     private static void CreateMILPs()
     {
         var fileNames = new DirectoryInfo(@"C:\Users\Rogier\Google Drive\Data\Github\").GetFiles();
-        int totalTime = 24 * 5;
+        int totalTime = 24 * 7;
         foreach (var filename in fileNames)
         {
 
@@ -109,12 +109,12 @@ class Program
         var fileNames = new DirectoryInfo(@"C:\Users\Rogier\Google Drive\Data\Github\").GetFiles();
         //  int totalTime = 24;
         var SW = new Stopwatch();
-        double rho = 0.00001;
+        double rho = 0.01;
         var dict = GetRhoAndStuff();
 
         foreach (var filething in fileNames.Skip(2))
         {
-            foreach (var totalTime in new List<int>() { 24 * 5 })
+            foreach (var totalTime in new List<int>() { 24 * 1, 24 * 2, 24 * 3, 24 * 4, 24 * 5 })
             {
 
                 double alpha = dict[filething.Name].Item1;
@@ -122,7 +122,7 @@ class Program
                 string id = string.Format("({0},{1},{2})", alpha, rho, count);
                 //Console.WriteLine(id);  
 
-                if (filething.Name != "RTS54.uc") continue;
+                // if (filething.Name != "GA10.uc") continue;
                 var filenameScore = @"C:\Users\" + Environment.UserName + @"\OneDrive - Universiteit Utrecht\UCSolutionOptimalScores\" + totalTime + @"\" + filething.Name;
 
                 List<(double, double, double)> MILPSnaps = File.ReadAllLines(filenameScore).Select(x =>
@@ -131,16 +131,19 @@ class Program
                     return (input[0], input[1], input[2]);
                 }).ToList();
                 SW.Restart();
-                var test = new RealADMM(filething.FullName, totalTime, rho, alpha, count, 1);
-                test.WriteAlgorithmToFile(10000);
+                var test = new PowerSystemSolution(filething.FullName, totalTime, rho, alpha, count, 1);
+                test.RunIterations(10000);
                 var time = (SW.Elapsed.TotalMilliseconds / 1000);
                 var score = test.GetScore();
 
+
+                var gTime = GetTime(MILPSnaps, time, score);
                 var ratio = GetScore(MILPSnaps, time, score);
                 var optRatio = GetObjectiveRatio(MILPSnaps, score);
-                Console.WriteLine("{0} {1} {2} {3} {4}", filething.Name[..3], Math.Round(time, 1), score, ratio, optRatio);
+                var line = string.Format("{0} {1} {2} {3} {4} {5}", filething.Name[..3], Math.Round(time, 1), score, ratio, optRatio, gTime);
+                Console.WriteLine(line);    
                 score = test.FinalScore;
-
+                File.AppendAllText(@"C:\Users\Rogier\Desktop\smallLog.txt", line + "\n");
                 // ratio = GetScore(MILPSnaps, time, score);
                 //optRatio = GetObjectiveRatio(MILPSnaps, score);
                 // Console.WriteLine("{0} {1} {2} {3} {4}", filething.Name, time, score, ratio, optRatio);
@@ -157,18 +160,20 @@ class Program
         var SW = new Stopwatch();
 
 
-        foreach (var rho in new List<double> { 0.000001 })
+        foreach (var rho in new List<double> { 0.01 })
         {
-            for (double rhoUpdate = 1.01; rhoUpdate <= 1.1; rhoUpdate += 0.01)
+            for (double rhoUpdate = 1.1; rhoUpdate >= 1.01; rhoUpdate -= 0.01)
             {
                 for (int count = 1; count <= 10; count++)
                 {
+
                     List<double> Ratios = new List<double>();
                     List<double> OptRatios = new List<double>();
                     List<double> Comptime = new List<double>();
                     string id = string.Format("({0},{1},{2})", rhoUpdate, rho, count);
                     foreach (var filename in fileNames)
                     {
+                        if (filename.Name != "FERC01h923.uc") continue;
                         var filenameScore = @"C:\Users\" + Environment.UserName + @"\OneDrive - Universiteit Utrecht\UCSolutionOptimalScores\" + totalTime + @"\" + filename.Name;
                         List<(double, double, double)> MILPSnaps = File.ReadAllLines(filenameScore).Select(x =>
                         {
@@ -193,11 +198,12 @@ class Program
                             Ratios.Add(ratio);
                             OptRatios.Add(optRatio);
                             Comptime.Add(time);
-                            File.AppendAllText(@"C:\Users\Rogier\Desktop\Looking.txt", filename.Name + "\t" + id + "\t" + (SW.Elapsed.TotalMilliseconds / 1000) + "\t" + test.GetScore() + "\t" + ratio + "\t" + optRatio + "\n");
+                            Console.WriteLine(filename.Name + "\t" + id + "\t" + (SW.Elapsed.TotalMilliseconds / 1000) + "\t" + test.GetScore() + "\t" + ratio + "\t" + optRatio + "\t" + GetTime(MILPSnaps, time, score));
+                           // File.AppendAllText(@"C:\Users\Rogier\Desktop\Looking.txt", filename.Name + "\t" + id + "\t" + (SW.Elapsed.TotalMilliseconds / 1000) + "\t" + test.GetScore() + "\t" + ratio + "\t" + optRatio + "\n");
                         }
                     }
-                    File.AppendAllText(@"C:\Users\Rogier\Desktop\Ratios.txt", string.Format("{0} {1} {2} {3} {4} {5} {6}", id, OptRatios.Average(), Ratios.Average(), Comptime.Average(), Ratios.Min(), Ratios.Max(), Comptime.Min(), Comptime.Max()) + "\n");
-                    File.AppendAllText(@"C:\Users\Rogier\Desktop\ForR.txt", string.Format("{0} {1} {2} {3} {4}", rhoUpdate, count, OptRatios.Average(), Ratios.Average(), Comptime.Average()) + "\n");
+                  //  File.AppendAllText(@"C:\Users\Rogier\Desktop\Ratios.txt", string.Format("{0} {1} {2} {3} {4} {5} {6}", id, OptRatios.Average(), Ratios.Average(), Comptime.Average(), Ratios.Min(), Ratios.Max(), Comptime.Min(), Comptime.Max()) + "\n");
+                  //  File.AppendAllText(@"C:\Users\Rogier\Desktop\ForR.txt", string.Format("{0} {1} {2} {3} {4}", rhoUpdate, count, OptRatios.Average(), Ratios.Average(), Comptime.Average()) + "\n");
                 }
             }
         }
@@ -216,6 +222,19 @@ class Program
             }
         }
         return (snaps.Last().Item1 - algScore) / snaps.Last().Item1;
+    }
+
+    private static double GetTime(List<(double, double, double)> snaps, double algTime, double algScore)
+    {
+        foreach (var (objective, bound, time) in snaps)
+        {
+            if (objective <= algScore)
+            {
+
+                return time;
+            }
+        }
+        return snaps.Last().Item3;
     }
 
     private static double GetObjectiveRatio(List<(double, double, double)> snaps, double algScore)
