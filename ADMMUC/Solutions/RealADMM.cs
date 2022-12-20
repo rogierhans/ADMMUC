@@ -25,7 +25,7 @@ namespace ADMMUC.Solutions
         readonly private double multiplierMultiplier;
         readonly private int rhoUpdateCounter;
 
-        ResolveTrans Resolve;
+      //  ResolveTrans Resolve;
         public RealADMM(string fileName, int totalTime, double rho, double rhoMultiplier, int rhoUpdateCounter, double multiplierMultiplier)
         {
 
@@ -41,20 +41,20 @@ namespace ADMMUC.Solutions
             CreateGenerationSolution(totalTime);
             CreateTransmissionSolution(totalTime);
             CreateResSolutions(totalTime);
-            Resolve = new ResolveTrans(PowerSystem, totalTime, true, false);
             Console.WriteLine("Done");
             this.rhoUpdateCounter = rhoUpdateCounter;
         }
 
         private void SetMultipliers()
         {
+            Random RNG = new Random();
             for (int t = 0; t < totalTime; t++)
             {
                 double price = PowerSystem.Units.Min(x => x.B);
                 for (int n = 0; n < totalNodes; n++)
                 {
                     var node = PowerSystem.Nodes[n];
-                    NodeMultipliers[n, t] = node.UnitsIndex.Count == 0 ? 0 : node.UnitsIndex.Average(x => PowerSystem.Units[x].B);
+                    NodeMultipliers[n, t] =( node.UnitsIndex.Count == 0 ? 0 : node.UnitsIndex.Average(x => PowerSystem.Units[x].B)) * ( (RNG.NextDouble() * 0.1) +1) ;
                 }
             }
         }
@@ -91,21 +91,13 @@ namespace ADMMUC.Solutions
                 sw.Stop();
                 var line = GSolutions.Sum(g => g.ReevalCost) + "\t" + ResidualLoad();
                 lines.Add(line);
-                if (i % 10 == 0 && GSolutions.Sum(g => g.ReevalCost) > 1)
-                {
-                    if (GLOBAL.ResolveInteration)
-                    {
-                        sw2.Start();
-                        ResolvesScores.Add((sw.Elapsed.TotalMilliseconds / 1000, ResolveSolutionWithMILP()));
-                        sw2.Stop();
-                    }
-                }
+
             }
             FinalIteration = i;
             FinalScore = GSolutions.Sum(g => g.ReevalCost);
             FinalTime = sw.Elapsed.TotalMilliseconds / 1000;
-            Resolve.KILL();
-            GSolutions.ToList().ForEach(x => x.GurobiDispose());
+           // Resolve.KILL();
+           // GSolutions.ToList().ForEach(x => x.GurobiDispose());
             bool RhoLargeEnough()
             {
                 if ((GSolutions.Sum(g => g.ReevalCost) > 100 && ResidualLoad() < 0.001) && ConvergedObjective())
@@ -130,7 +122,7 @@ namespace ADMMUC.Solutions
         List<double> Values = new List<double>();
         public void Go(int rhoUpdateCounter)
         {
-            Console.WriteLine(GSolutions.Sum(g => g.ReevalCost) + " " + ResidualLoad() + " " + Rho + " " + GetDemand().Flat().Select(x => Math.Abs(x)).Average() + " " + GetDemand().Flat().Select(x => Math.Abs(x)).Max());
+           // Console.WriteLine(GSolutions.Sum(g => g.ReevalCost) + " " + ResidualLoad() + " " + Rho + " " + GetDemand().Flat().Select(x => Math.Abs(x)).Average() + " " + GetDemand().Flat().Select(x => Math.Abs(x)).Max());
 
             var CurrentDemand = GetDemand();
             foreach (var g in Enumerable.Range(0, RSolutions.Length).OrderBy(i => RNG.NextDouble()).ToList())
@@ -204,41 +196,7 @@ namespace ADMMUC.Solutions
         public double FinalResolveTime;
         public double FinalResolveScore;
 
-        private double ResolveSolutionWithMILP()
-        {
-            var commits = new int[totalTime, totalUnits];
-            var Ps = new double[totalTime, totalUnits];
-            for (int t = 0; t < totalTime; t++)
-            {
-                for (int g = 0; g < totalUnits; g++)
-                {
-                    commits[t, g] = GSolutions[g].OldSolution.Steps[t].On ? 1 : 0;
-                    Ps[t, g] = GSolutions[g].CurrentDispatchAtTime[t];
-                }
-            }
 
-            (double val, double ms, double cost, double lol) = Resolve.Solve(commits);
-            FinalResolveTime = ms / 1000;
-            FinalResolveScore = val;
-            Console.WriteLine(val + " " + cost + " " + lol);
-            return val;
-        }
-
-        private void Check()
-        {
-            var commits = new int[totalTime, totalUnits];
-            var Ps = new double[totalTime, totalUnits];
-            for (int t = 0; t < totalTime; t++)
-            {
-                for (int g = 0; g < totalUnits; g++)
-                {
-                    commits[t, g] = GSolutions[g].OldSolution.Steps[t].On ? 1 : 0;
-                    Ps[t, g] = GSolutions[g].CurrentDispatchAtTime[t];
-                }
-            }
-            //  if (val > GSolutions.Sum(g => g.ReevalCost))
-            Resolve.Check(commits, Ps);
-        }
 
         private void CreateResSolutions(int totalTime)
         {

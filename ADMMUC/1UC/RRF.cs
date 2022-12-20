@@ -162,7 +162,7 @@ namespace ADMMUC._1UC
                 Z.NextPoints(h);
                 Z.IncreasePoints(h);
             }
-            if (h % 4 == 0 && h > UC.MinUpTime && Reduction)
+            if (h % 2 == 0 && h > UC.MinUpTime && Reduction)
             {
                 OGremoveWeaklings(h);
                 //AltRemoveWeaklings(h);

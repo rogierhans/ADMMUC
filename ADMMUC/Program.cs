@@ -16,17 +16,22 @@ class Program
 {
     static void Main()
     {
-
+        CreateMILPs();
+        //CreateMILPs(); return;
         //List<double> scores = new List<double>();
-        foreach (var (key, (na, bl, score)) in GetRhoAndStuff())
-        {
-            Console.WriteLine("{0} {1} {2} {3}", key[..3], na, bl, score);
-        }
-        //Test();
+        //foreach (var (key, (na, bl, score)) in GetRhoAndStuff())
+        //{
+        //    Console.WriteLine("{0} {1} {2} {3}", key[..5], na, bl, score);
+        //}
+        //Console.ReadLine();
+        //Test6(1.2);
+        //Test6(1.1);
+        //Test100(1.1);
+        //Test6(1.01);
         //Console.WriteLine(scores.Average());
-         CreateMILPs();
+
         // return;
-       //  RhoIncreaseTest();
+        //  RhoIncreaseTest();
         //var filename = @"C:\Users\Rogier\Google Drive\Data\Github\" + "GA10.uc";
         //int totalTime = 24;
         //var rhoUpdate = 1.1;
@@ -62,7 +67,7 @@ class Program
             var name = input[0];
             var alpha = double.Parse(input[1][1..^1].Split(',').First());
             var m = int.Parse(input[1][1..^1].Split(',')[2]);
-            var score = double.Parse(input[4]);
+            var score = double.Parse(input[5]);
             if (!dict.ContainsKey(name))
             {
                 dict[name] = (alpha, m, score);
@@ -85,6 +90,12 @@ class Program
         var Resolve = new ResolveTrans(PS, totalTime, false, false);
         List<(double, double, double)> Snaps = Resolve.Solve(60 * 60);
         var filename = @"C:\Users\" + Environment.UserName + @"\OneDrive - Universiteit Utrecht\UCSolutionOptimalScores\" + totalTime + @"\";
+        //create directory
+        if (!Directory.Exists(filename))
+        {
+            Directory.CreateDirectory(filename);
+        }   
+
         File.WriteAllLines(filename + PS.Name, Snaps.Select(x => x.Item1 + "\t" + x.Item2 + "\t" + x.Item3 + "\t"));
     }
 
@@ -92,9 +103,12 @@ class Program
     private static void CreateMILPs()
     {
         var fileNames = new DirectoryInfo(@"C:\Users\Rogier\Google Drive\Data\Github\").GetFiles();
-        int totalTime = 24 * 7;
-        foreach (var filename in fileNames)
+
+        foreach (var filename in fileNames.OrderBy(x => x.Name.GetNumbers().First()).Take(8))
         {
+            if (filename.Name.Contains("RTS")) continue;
+            Console.WriteLine(filename.Name);
+            int totalTime = 24 * 7 * 4;
 
             var ConstraintConfiguration = new ConstraintConfiguration(false, false, "", false, false, false, 1);
             ConstraintConfiguration.SetLimits(0, -1, -1, -1);
@@ -102,112 +116,6 @@ class Program
             DoMILP(PowerSystem, totalTime);
 
         }
-
-    }
-    private static void Test()
-    {
-        var fileNames = new DirectoryInfo(@"C:\Users\Rogier\Google Drive\Data\Github\").GetFiles();
-        //  int totalTime = 24;
-        var SW = new Stopwatch();
-        double rho = 0.01;
-        var dict = GetRhoAndStuff();
-
-        foreach (var filething in fileNames.Skip(2))
-        {
-            foreach (var totalTime in new List<int>() { 24 * 1, 24 * 2, 24 * 3, 24 * 4, 24 * 5 })
-            {
-
-                double alpha = dict[filething.Name].Item1;
-                int count = dict[filething.Name].Item2;
-                string id = string.Format("({0},{1},{2})", alpha, rho, count);
-                //Console.WriteLine(id);  
-
-                // if (filething.Name != "GA10.uc") continue;
-                var filenameScore = @"C:\Users\" + Environment.UserName + @"\OneDrive - Universiteit Utrecht\UCSolutionOptimalScores\" + totalTime + @"\" + filething.Name;
-
-                List<(double, double, double)> MILPSnaps = File.ReadAllLines(filenameScore).Select(x =>
-                {
-                    var input = x.Split('\t').Take(3).Select(double.Parse).ToList();
-                    return (input[0], input[1], input[2]);
-                }).ToList();
-                SW.Restart();
-                var test = new PowerSystemSolution(filething.FullName, totalTime, rho, alpha, count, 1);
-                test.RunIterations(10000);
-                var time = (SW.Elapsed.TotalMilliseconds / 1000);
-                var score = test.GetScore();
-
-
-                var gTime = GetTime(MILPSnaps, time, score);
-                var ratio = GetScore(MILPSnaps, time, score);
-                var optRatio = GetObjectiveRatio(MILPSnaps, score);
-                var line = string.Format("{0} {1} {2} {3} {4} {5}", filething.Name[..3], Math.Round(time, 1), score, ratio, optRatio, gTime);
-                Console.WriteLine(line);    
-                score = test.FinalScore;
-                File.AppendAllText(@"C:\Users\Rogier\Desktop\smallLog.txt", line + "\n");
-                // ratio = GetScore(MILPSnaps, time, score);
-                //optRatio = GetObjectiveRatio(MILPSnaps, score);
-                // Console.WriteLine("{0} {1} {2} {3} {4}", filething.Name, time, score, ratio, optRatio);
-                // Console.ReadLine();
-            }
-            Console.WriteLine();
-        }
-    }
-
-    private static void RhoIncreaseTest()
-    {
-        var fileNames = new DirectoryInfo(@"C:\Users\Rogier\Google Drive\Data\Github\").GetFiles();
-        int totalTime = 24;
-        var SW = new Stopwatch();
-
-
-        foreach (var rho in new List<double> { 0.01 })
-        {
-            for (double rhoUpdate = 1.1; rhoUpdate >= 1.01; rhoUpdate -= 0.01)
-            {
-                for (int count = 1; count <= 10; count++)
-                {
-
-                    List<double> Ratios = new List<double>();
-                    List<double> OptRatios = new List<double>();
-                    List<double> Comptime = new List<double>();
-                    string id = string.Format("({0},{1},{2})", rhoUpdate, rho, count);
-                    foreach (var filename in fileNames)
-                    {
-                        if (filename.Name != "FERC01h923.uc") continue;
-                        var filenameScore = @"C:\Users\" + Environment.UserName + @"\OneDrive - Universiteit Utrecht\UCSolutionOptimalScores\" + totalTime + @"\" + filename.Name;
-                        List<(double, double, double)> MILPSnaps = File.ReadAllLines(filenameScore).Select(x =>
-                        {
-                            //Console.WriteLine(x);
-                            var input = x.Split('\t').Take(3).Select(y =>
-                        {
-                            return double.Parse(y);
-                        }).ToList();
-
-                            return (input[0], input[1], input[2]);
-                        }).ToList();
-                        {
-                            SW.Restart();
-                            var test = new PowerSystemSolution(filename.FullName, totalTime, rho, rhoUpdate, count, 1);
-                            test.RunIterations(10000);
-                            var time = (SW.Elapsed.TotalMilliseconds / 1000);
-                            var score = test.GetScore();
-                            var ratio = GetScore(MILPSnaps, time, score);
-                            var optRatio = GetObjectiveRatio(MILPSnaps, score);
-                            Console.WriteLine(SW.Elapsed.TotalMilliseconds);
-                            Console.WriteLine(ratio);
-                            Ratios.Add(ratio);
-                            OptRatios.Add(optRatio);
-                            Comptime.Add(time);
-                            Console.WriteLine(filename.Name + "\t" + id + "\t" + (SW.Elapsed.TotalMilliseconds / 1000) + "\t" + test.GetScore() + "\t" + ratio + "\t" + optRatio + "\t" + GetTime(MILPSnaps, time, score));
-                           // File.AppendAllText(@"C:\Users\Rogier\Desktop\Looking.txt", filename.Name + "\t" + id + "\t" + (SW.Elapsed.TotalMilliseconds / 1000) + "\t" + test.GetScore() + "\t" + ratio + "\t" + optRatio + "\n");
-                        }
-                    }
-                  //  File.AppendAllText(@"C:\Users\Rogier\Desktop\Ratios.txt", string.Format("{0} {1} {2} {3} {4} {5} {6}", id, OptRatios.Average(), Ratios.Average(), Comptime.Average(), Ratios.Min(), Ratios.Max(), Comptime.Min(), Comptime.Max()) + "\n");
-                  //  File.AppendAllText(@"C:\Users\Rogier\Desktop\ForR.txt", string.Format("{0} {1} {2} {3} {4}", rhoUpdate, count, OptRatios.Average(), Ratios.Average(), Comptime.Average()) + "\n");
-                }
-            }
-        }
-
 
     }
 
@@ -255,20 +163,43 @@ public static class GLOBAL
     public static bool RelaxGurobi = false;
     public static bool LINEAR = false;
     public static bool IncreaseRho = true;
-    public static void LinearModelTest()
-    {
-        ForceEnding = false;
-        UseGurobi = true;
-        RelaxGurobi = true;
-        ResolveInteration = false;
-    }
 
-    public static void Reverse()
+    public static List<int> GetNumbers(this string line)
     {
-        ForceEnding = true;
-        UseGurobi = false;
-        RelaxGurobi = false;
-        ResolveInteration = false;
+        // Console.WriteLine(line);
+        List<int> list = new List<int>();
+        string number = "";
+        for (int i = 0; i < line.Length; i++)
+        {
+            //Console.WriteLine(number);
+            if ((number == "") && (line[i] == '-'))
+            {
+                number = "-";
+            }
+            else if (line[i] >= '0' && line[i] <= '9')
+            {
+                number += line[i];
+            }
+            else if (number.Length > 0 && number != "-")
+            {
+                _ = int.TryParse(number, out int parsedNumber);
+                list.Add(parsedNumber);
+                number = "";
+            }
+            else
+            {
+                number = "";
+            }
+        }
+        if (number.Length > 0 && number != "-")
+        {
 
+            _ = int.TryParse(number, out int parsedNumber);
+            list.Add(parsedNumber);
+
+        }
+        //Console.ReadLine();
+        return list;
+        //return ..Where(x => !string.IsNullOrEmpty(x)).Where(x => x.Length < 9).Select(int.Parse).ToList();
     }
 }

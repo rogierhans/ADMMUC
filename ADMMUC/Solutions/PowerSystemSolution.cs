@@ -43,8 +43,11 @@ namespace ADMMUC.Solutions
             this.multiplierMultiplier = multiplierMultiplier;
 
             SetMultipliers();
+            Console.WriteLine("Creating Solutions");
             CreateGenerationSolution(totalTime, fileName.Split('\\').Last().Split('.').First());
+            Console.WriteLine("Creating Trans");
             TSolution = new ADMMTrans(PowerSystem, totalTime);
+            Console.WriteLine("Done Trans");
             CreateResSolutions(totalTime);
             if (GLOBAL.ResolveInteration)
                 Resolve = new ResolveTrans(PowerSystem, totalTime, true, false);
@@ -81,7 +84,7 @@ namespace ADMMUC.Solutions
         protected int counter = 0;
         public virtual void RunIterations(int maxIterations)
         {
-
+              
             while (i++ < maxIterations && !Converged())
             {
                 Go(rhoUpdateCounter);
@@ -131,9 +134,13 @@ namespace ADMMUC.Solutions
 
         public virtual void Go(int rhoUpdateCounter)
         {
-          // Console.WriteLine(GSolutions.Sum(g => g.ReevalCost) + " " + AbsoluteResidualLoad() + " " + Rho + " " + GetDemand().Flat().Select(x => Math.Abs(x)).Average() + " " + GetDemand().Flat().Select(x => Math.Abs(x)).Max());
+           //Console.WriteLine( i+" "+GSolutions.Sum(g => g.ReevalCost) + " " + AbsoluteResidualLoad() + " " + Rho + " " + GetDemand().Flat().Select(x => Math.Abs(x)).Average() + " " + GetDemand().Flat().Select(x => Math.Abs(x)).Max());
 
             var CurrentDemand = GetDemand();
+            foreach (var g in Enumerable.Range(0, RSolutions.Length).OrderBy(i => RNG.NextDouble()).ToList())
+            {
+                RSolutions[g].Reevaluate(NodeMultipliers, CurrentDemand, Rho, totalTime);
+            }
             foreach (var g in Enumerable.Range(0, GSolutions.Length).OrderBy(i => RNG.NextDouble()).ToList())
             {
                 if (GLOBAL.UseGurobi)
@@ -145,10 +152,7 @@ namespace ADMMUC.Solutions
 
                 }
             }
-            foreach (var g in Enumerable.Range(0, RSolutions.Length).OrderBy(i => RNG.NextDouble()).ToList())
-            {
-                RSolutions[g].Reevaluate(NodeMultipliers, CurrentDemand, Rho, totalTime);
-            }
+
             if (PowerSystem.Nodes.Count > 1)
             {
                 TSolution.Reevaluate(NodeMultipliers, CurrentDemand, Rho);
@@ -157,9 +161,9 @@ namespace ADMMUC.Solutions
             if (counter++ % rhoUpdateCounter == 0 && GLOBAL.IncreaseRho)
             {
                 Rho *= RhoMultiplier;
-                if (ConvergedObjective() && GLOBAL.ForceEnding)
+                if (ConvergedObjective() && AbsoluteResidualLoad()<1 && GLOBAL.ForceEnding)
                 {
-                    Rho *= 10;
+                    Rho *= 100;
                     rhoUpdateCounter = 1;
                 }
             }
@@ -232,9 +236,9 @@ namespace ADMMUC.Solutions
             bool p = true;
             for (int i = 0; i < LastK.Count - 1; i++)
             {
-                p &= (Math.Abs(LastK[i] - LastK[i + 1]) / LastK[i]) < 0.0000001;
+                p &= (Math.Abs(LastK[i] - LastK[i + 1]) / LastK[i]) < 0.0001;
             }
-            return p && counter > 500;
+            return p && i>50 ;
         }
 
 

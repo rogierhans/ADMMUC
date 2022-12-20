@@ -31,6 +31,7 @@ namespace ADMMUC.Solutions
             TransSubproblem = new ADMMSingleTrans[totalTime];
             for (int t = 0; t < totalTime; t++)
             {
+                Console.Write(t + " ");
                 TransSubproblem[t] = new ADMMSingleTrans(PS, t);
             }
 
@@ -57,6 +58,7 @@ namespace ADMMUC.Solutions
             double total = 0;
             for (int t = 0; t < totalTime; t++)
             {
+               // Console.WriteLine(t);
                 TransSubproblem[t].rho = rho;
                 double[] Bs = new double[totalNodes];
                 double[] Cs = new double[totalNodes];

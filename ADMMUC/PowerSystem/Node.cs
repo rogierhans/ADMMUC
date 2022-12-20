@@ -27,8 +27,13 @@ namespace ADMMUC
             RESindex = resindex;
         }
 
+
+        private double stored = 0;
         public double PotentialExport(PowerSystem PS) {
-            return PS.Units.Where(unit => UnitsIndex.Contains(unit.ID)).Sum(x => x.PMax) + PS.Res.Where(res => RESindex.Contains(res.ID)).Sum(x => x.ResValues.Max());
+            if (stored == 0) {
+                stored = PS.Units.Where(unit => UnitsIndex.Contains(unit.ID)).Sum(x => x.PMax) + PS.Res.Where(res => RESindex.Contains(res.ID)).Sum(x => x.ResValues.Max());
+            }
+            return stored;
         }
 
         public void PeturbDemand(Random RNG, double factor)
