@@ -31,7 +31,7 @@ namespace ADMMUC.Solutions
             TransSubproblem = new ADMMSingleTrans[totalTime];
             for (int t = 0; t < totalTime; t++)
             {
-                Console.Write(t + " ");
+              //  Console.Write(t + " ");
                 TransSubproblem[t] = new ADMMSingleTrans(PS, t);
             }
 

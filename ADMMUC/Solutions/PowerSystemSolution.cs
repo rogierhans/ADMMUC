@@ -43,11 +43,11 @@ namespace ADMMUC.Solutions
             this.multiplierMultiplier = multiplierMultiplier;
 
             SetMultipliers();
-            Console.WriteLine("Creating Solutions");
+            //Console.WriteLine("Creating Solutions");
             CreateGenerationSolution(totalTime, fileName.Split('\\').Last().Split('.').First());
-            Console.WriteLine("Creating Trans");
+           // Console.WriteLine("Creating Trans");
             TSolution = new ADMMTrans(PowerSystem, totalTime);
-            Console.WriteLine("Done Trans");
+            //Console.WriteLine("Done Trans");
             CreateResSolutions(totalTime);
             if (GLOBAL.ResolveInteration)
                 Resolve = new ResolveTrans(PowerSystem, totalTime, true, false);

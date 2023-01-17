@@ -16,7 +16,8 @@ class Program
 {
     static void Main()
     {
-        CreateMILPs();
+        //CreateMILPs();
+        Test8(1.1);
         //CreateMILPs(); return;
         //List<double> scores = new List<double>();
         //foreach (var (key, (na, bl, score)) in GetRhoAndStuff())
@@ -54,7 +55,63 @@ class Program
 
     }
 
+    private static void Test8(double alpha)
+    {
+        var fileNames = new DirectoryInfo(@"C:\Users\Rogier\Google Drive\Data\Github\").GetFiles();
+        //  int totalTime = 24;
+        var SW = new Stopwatch();
+        double rho = 0.00001;
+        var dict = GetRhoAndStuff();
 
+
+        string logName = String.Format("C:\\Users\\Rogier\\Dropbox\\{0}Extra3.txt", alpha);
+        File.WriteAllText(logName, "Instance\tHorizon\tTime\tObjective\tGap\tOptGap\tTimeMIP\tIterations\tTimeFactor\tGapBestKnown");
+
+
+        int totalTime = 696;
+        foreach (var filething in fileNames.OrderBy(x => x.Name.GetNumbers().First()).Take(8))
+            for (int i = 0; i < 100; i++)
+            {
+                totalTime += 24;
+                if (filething.Name.Contains("RTS")) continue;
+                var PSS = new PowerSystemSolution(filething.FullName, totalTime, rho, alpha, 1, 1);
+              //  Console.WriteLine(filething.Name);
+                SW.Restart();
+                PSS.RunIterations(10000);
+                var time = (SW.Elapsed.TotalMilliseconds / 1000);
+                var score = PSS.GetScore();
+
+
+                string timeHsting = totalTime.ToString();
+                if (totalTime < 100)
+                {
+                    timeHsting = "0" + timeHsting + "h";
+                }
+                else
+                {
+                    timeHsting = timeHsting + "h";
+                }
+                var line = string.Join("\t", new List<object>() {
+                    filething.Name.Replace("201409", "").Replace("01", "").Replace("01h", ""),
+                    timeHsting,
+                    Math.Round(time, 2),
+                    score,
+                    PSS.i
+                    });
+                Console.WriteLine(line);
+                //Console.ReadLine();
+                score = PSS.FinalScore;
+               // File.AppendAllText(logName, line + "\n");
+                //
+                // ratio = GetScore(MILPSnaps, time, score);
+                //optRatio = GetObjectiveRatio(MILPSnaps, score);
+                // Console.WriteLine("{0} {1} {2} {3} {4}", filething.Name, time, score, ratio, optRatio);
+                // Console.ReadLine();
+            }
+
+
+
+    }
     private static Dictionary<string, (double, int, double)> GetRhoAndStuff()
     {
         var filename = @"C:\Users\Rogier\Desktop\Looking.txt";
@@ -94,7 +151,7 @@ class Program
         if (!Directory.Exists(filename))
         {
             Directory.CreateDirectory(filename);
-        }   
+        }
 
         File.WriteAllLines(filename + PS.Name, Snaps.Select(x => x.Item1 + "\t" + x.Item2 + "\t" + x.Item3 + "\t"));
     }
