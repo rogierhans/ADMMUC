@@ -16,7 +16,7 @@ namespace ADMMUC.Solutions
         private readonly int totalTime;
         private readonly int totalNodes;
         private readonly PowerSystem PS;
-        private readonly ADMMSingleTrans[] TransSubproblem;
+        private readonly TransmissionSingleTimestepSubproblem[] TransSubproblem;
         private double[,] _currentExport;
         public double[,] CurrentExport { get => _currentExport; set => _currentExport = value; }
 
@@ -28,11 +28,11 @@ namespace ADMMUC.Solutions
             Lines = ps.Lines;
             this.totalTime = totalTime;
             PS = ps;
-            TransSubproblem = new ADMMSingleTrans[totalTime];
+            TransSubproblem = new TransmissionSingleTimestepSubproblem[totalTime];
             for (int t = 0; t < totalTime; t++)
             {
               //  Console.Write(t + " ");
-                TransSubproblem[t] = new ADMMSingleTrans(PS, t);
+                TransSubproblem[t] = new TransmissionSingleTimestepSubproblem(PS, t);
             }
 
         }

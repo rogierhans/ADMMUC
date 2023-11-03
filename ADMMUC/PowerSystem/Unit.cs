@@ -105,11 +105,6 @@ namespace ADMMUC
         public int RealMinDowntime;
         public void SetMinTime(int minUpTime, int minDownTime, bool ConstraintActive)
         {
-            if (minUpTime < 1 || minDownTime < 1)
-            {
-                Console.WriteLine("error MinimumUP/DOWNTime less than 1 ");
-                Console.ReadLine();
-            }
             MinUpTime = Math.Max(2, minUpTime);
             MinDownTime = Math.Max(2, minDownTime);
             RealMinUptime = MinUpTime;

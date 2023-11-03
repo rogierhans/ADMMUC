@@ -7,17 +7,14 @@ using Gurobi;
 using System.Diagnostics;
 namespace ADMMUC.Solutions
 {
-    class ADMMSingleTrans
+    class TransmissionSingleTimestepSubproblem
     {
-        // public double OtherScore = 0;
-        //public List<double> OtherExport;
         readonly int T;
         List<TransmissionLine> Lines;
-        // public double[] CurrentExport;
         PowerSystem PS;
         int totalNodes;
 
-        public ADMMSingleTrans(PowerSystem ps, int t)
+        public TransmissionSingleTimestepSubproblem(PowerSystem ps, int t)
         {
             totalNodes = ps.Nodes.Count;
             Lines = ps.Lines;
@@ -52,17 +49,13 @@ namespace ADMMUC.Solutions
             double currentValue = 0;
             rho = Math.Max(rho, 1);
             currentValue = Iteration(Bs, Cs);
-            int counter = 0;
             while (((ResidualLoad() > 0.000001 || rho > 1) && ResidualLoad() > 0.01 ))
             {
-               
-                //Console.WriteLine("{0} {1} {2}", currentValue, ResidualLoad(), rho);
                 for (int n = 0; n < totalNodes; n++)
                 {
                     Lagrange[n] = Lagrange[n] + (export[n] - FlowTotal[n]) * rho;
                 }
                 currentValue = Iteration(Bs, Cs);
-                //  Console.WriteLine("{0} {1} {2}", currentValue, ResidualLoad(), rho);
             }
             return currentValue;
         }
@@ -77,15 +70,6 @@ namespace ADMMUC.Solutions
             return total;
         }
 
-        public double RecalcPrimal(double[] Bs, double[] Cs)
-        {
-            double total = 0;
-            for (int n = 0; n < PS.Nodes.Count; n++)
-            {
-                total += Bs[n] * (FlowTotal[n]) + Cs[n] * FlowTotal[n] * FlowTotal[n];
-            }
-            return total;
-        }
 
         Random rng = new Random();
         private double[] RandomMultipliers()
@@ -125,11 +109,6 @@ namespace ADMMUC.Solutions
                 value += -Lagrange[n] * FlowTotal[n];
             }
 
-            //model.SetObjective(objective, GRB.MINIMIZE);
-            //model.Optimize();
-            //value += objective.Value;
-
-
             return value;
         }
 
@@ -146,40 +125,6 @@ namespace ADMMUC.Solutions
             if (minimum < min) return min;
             else if (minimum > max) return max;
             else return minimum;
-        }
-
-
-
-        public void PrintFlows()
-        {
-            for (int n = 0; n < totalNodes; n++)
-            {
-                Console.WriteLine(export[n]);
-            }
-            //   Console.WriteLine(string.Join("\t", export));
-        }
-        public void Print()
-        {
-            string line = "";
-            for (int n = 0; n < totalNodes; n++)
-            {
-                line += "\t" + ((export[n] - FlowTotal[n]));
-            }
-            Console.WriteLine(line);
-
-            line = "";
-            for (int n = 0; n < totalNodes; n++)
-            {
-                line += "\t" + Math.Round(Lagrange[n]);
-            }
-            Console.WriteLine(line);
-
-            line = "";
-            for (int n = 0; n < totalNodes; n++)
-            {
-                line += "\t" + Math.Round(export[n]);
-            }
-            Console.WriteLine(line);
         }
     }
 }
