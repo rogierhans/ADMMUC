@@ -143,6 +143,8 @@ namespace ADMMUC._1UC
                 interval.B += -UC.LagrangeMultipliers[t] + UC.B + UC.BM[t];
                 interval.C += UC.C + UC.CM[t];
             }
+
+            GLOBAL.Ms.Add(Intervals.Count());
         }
 
         internal double BestEnd()

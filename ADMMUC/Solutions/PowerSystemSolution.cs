@@ -25,7 +25,6 @@ namespace ADMMUC.Solutions
         readonly protected double RhoMultiplier;
         readonly protected double multiplierMultiplier;
         readonly protected int rhoUpdateCounter;
-        readonly ResolveTrans Resolve;
         public PowerSystemSolution(string fileName, int totalTime, double rho, double rhoMultiplier, int rhoUpdateCounter, double multiplierMultiplier)
         {
 
@@ -43,14 +42,9 @@ namespace ADMMUC.Solutions
             this.multiplierMultiplier = multiplierMultiplier;
 
             SetMultipliers();
-            //Console.WriteLine("Creating Solutions");
             CreateGenerationSolution(totalTime, fileName.Split('\\').Last().Split('.').First());
-           // Console.WriteLine("Creating Trans");
             TSolution = new ADMMTrans(PowerSystem, totalTime);
-            //Console.WriteLine("Done Trans");
             CreateResSolutions(totalTime);
-            if (GLOBAL.ResolveInteration)
-                Resolve = new ResolveTrans(PowerSystem, totalTime, true, false);
             this.rhoUpdateCounter = rhoUpdateCounter;
         }
 
@@ -81,41 +75,29 @@ namespace ADMMUC.Solutions
         public int FinalIteration;
         public int i = 0;
         protected int solutioncounter = 0;
+        bool Converged()
+        {
+            if ((GSolutions.Sum(g => g.ReevalCost) > 100 && AbsoluteResidualLoad() < 0.001) && ConvergedObjective())
+            {
+                solutioncounter++;
+            }
+            else
+            {
+                solutioncounter = 0;
+            }
+            return Rho > (long)1 << 50 || solutioncounter >= 10;
+        }
         protected int counter = 0;
         public virtual void RunIterations(int maxIterations)
         {
               
             while (i++ < maxIterations && !Converged())
             {
-                Go(rhoUpdateCounter);
-               // LogRL();
-                //CheckNodes();
-                if (i % 100 == 0 && GSolutions.Sum(g => g.ReevalCost) > 1)
-                {
-                    if (GLOBAL.ResolveInteration)
-                    {
-
-                        ResolveSolutionWithMILP();
-                    }
-                }
+                Iteration(rhoUpdateCounter);
             }
 
             FinalIteration = i;
             FinalScore = GSolutions.Sum(g => g.ReevalCost);
-            //  Resolve.KILL();
-            //GSolutions.ToList().ForEach(x => x.GurobiDispose());
-            bool Converged()
-            {
-                if ((GSolutions.Sum(g => g.ReevalCost) > 100 && AbsoluteResidualLoad() < 0.001) && ConvergedObjective())
-                {
-                    solutioncounter++;
-                }
-                else
-                {
-                    solutioncounter = 0;
-                }
-                return Rho > (long)1 << 50 || solutioncounter >= 10;
-            }
         }
 
 
@@ -132,10 +114,8 @@ namespace ADMMUC.Solutions
 
         public List<double> Deltas = new List<double>();
 
-        public virtual void Go(int rhoUpdateCounter)
+        public virtual void Iteration(int rhoUpdateCounter)
         {
-           //Console.WriteLine( i+" "+GSolutions.Sum(g => g.ReevalCost) + " " + AbsoluteResidualLoad() + " " + Rho + " " + GetDemand().Flat().Select(x => Math.Abs(x)).Average() + " " + GetDemand().Flat().Select(x => Math.Abs(x)).Max());
-
             var CurrentDemand = GetDemand();
             foreach (var g in Enumerable.Range(0, RSolutions.Length).OrderBy(i => RNG.NextDouble()).ToList())
             {
@@ -149,7 +129,6 @@ namespace ADMMUC.Solutions
                 {
                     var delta = GSolutions[g].Reevaluate(NodeMultipliers, CurrentDemand, Rho, totalTime, Test1UC);
                     Deltas.Add(delta);
-
                 }
             }
 
@@ -178,20 +157,6 @@ namespace ADMMUC.Solutions
             }
         }
 
-        private double[,] GetGenerationAtNode()
-        {
-            double[,] generation = new double[totalNodes, totalTime];
-            for (int n = 0; n < totalNodes; n++)
-            {
-                var genSolutions = PowerSystem.Nodes[n].UnitsIndex.Select(g => GSolutions[g]);
-                for (int t = 0; t < totalTime; t++)
-                {
-                    generation[n, t] = genSolutions.Sum(g => (g.OldSolution.Steps[t].On?1:0) * g.SGUC.pMin);
-                }
-            }
-            return generation;
-        }
-
         protected void CreateGenerationSolution(int totalTime, string name)
         {
             GSolutions = new GenerationSolution[totalUnits + totalNodes];
@@ -206,17 +171,8 @@ namespace ADMMUC.Solutions
                 int minDownTime = unit.MinDownTime;
                 int SD = (int)Math.Max(pMin, unit.ShutDown);
                 int SU = (int)Math.Max(pMin, unit.StartUp);
-                if (pMin >= pMax || SD > pMax || SU > pMax || MinUp < 1 || minDownTime < 1 || SD < pMin || SU < pMin || pMin < 0)
-                {
-                    Console.WriteLine("[{0},{1}] SD:{2} SU:{3}    up:{4} down:{5}", pMin, pMax, SD, SU, MinUp, minDownTime);
-                    throw new Exception();
-                }
-                else
-                {
-                    var SGU = new SUC(unit.A, unit.B, unit.C, unit.StartCostInterval.First(), pMax, pMin, RU, RD, MinUp, minDownTime, SU, SD, totalTime);
-                    GSolutions[u] = new GenerationSolution(SGU, totalTime, PowerSystem.Nodes.First(node => node.UnitsIndex.Contains(u)).ID, name);
-                    // SGU.CreateEnv(GLOBAL.RelaxGurobi);
-                }
+                var SGU = new SUC(unit.A, unit.B, unit.C, unit.StartCostInterval.First(), pMax, pMin, RU, RD, MinUp, minDownTime, SU, SD, totalTime);
+                GSolutions[u] = new GenerationSolution(SGU, totalTime, PowerSystem.Nodes.First(node => node.UnitsIndex.Contains(u)).ID, name);
             }
             for (int n = 0; n < totalNodes; n++)
             {
@@ -225,7 +181,6 @@ namespace ADMMUC.Solutions
                 var UC = new SUC(0, 10000, 0, 0, max, 0, max, max, 2, 2, max, max, totalTime);
                 GSolutions[index] = new GenerationSolution(UC, totalTime, n, name);
                 PowerSystem.Nodes[n].UnitsIndex.Add(index);
-                //UC.CreateEnv(GLOBAL.RelaxGurobi);
             }
         }
 
@@ -275,135 +230,6 @@ namespace ADMMUC.Solutions
             return Demand;
         }
 
-
-
-
-
-        //private double LRReeval()
-        //{
-        //    double cost = 0;
-        //    foreach (var g in Enumerable.Range(0, GSolutions.Length).OrderBy(i => RNG.NextDouble()).ToList())
-        //    {
-        //        cost += GSolutions[g].LR(NodeMultipliers, totalTime);
-        //    }
-        //    // Console.WriteLine(cost);
-        //    for (int t = 0; t < totalTime; t++)
-        //    {
-        //        for (int n = 0; n < totalNodes; n++)
-        //        {
-        //            cost += NodeMultipliers[n, t] * PowerSystem.Nodes[n].NodalDemand(t);
-        //        }
-        //    }
-        //    // Console.WriteLine(cost);
-        //    for (int t = 0; t < totalTime; t++)
-        //    {
-        //        //    cost += TSolutions[t].LR(NodeMultipliers);
-        //    }
-        //    foreach (var g in Enumerable.Range(0, RSolutions.Length).OrderBy(i => RNG.NextDouble()).ToList())
-        //    {
-
-        //        cost += RSolutions[g].LR(NodeMultipliers, totalTime);
-        //    }
-        //    return cost;
-        //}
-
-        //public double FinalResolveTime;
-        //public double FinalResolveScore;
-        private void PrintMultipliers()
-        {
-
-            for (int n = 0; n < totalNodes; n++)
-            {
-                List<double> multies = new List<double>();
-                for (int t = 0; t < totalTime; t++)
-                {
-                    multies.Add(Math.Round(NodeMultipliers[n, t], 1));
-                }
-                Console.WriteLine(String.Join("\t", multies));
-                //Console.ReadLine();
-            }
-        }
-
-        private double ResolveSolutionWithMILP()
-        {
-            var commits = new int[totalTime, totalUnits];
-            var Ps = new double[totalTime, totalUnits];
-            for (int t = 0; t < totalTime; t++)
-            {
-                for (int g = 0; g < totalUnits; g++)
-                {
-                    commits[t, g] = GSolutions[g].OldSolution.Steps[t].On ? 1 : 0;
-                    Ps[t, g] = GSolutions[g].CurrentDispatchAtTime[t];
-                }
-            }
-
-            (double val, double ms, double cost, double lol) = Resolve.Solve(commits);
-            Console.WriteLine("RESOLVE " + val + " " + cost + " " + lol);
-            return val;
-        }
-
-        private void LogRL()
-        {
-            if (AbsoluteResidualLoad() > 1000) return;
-
-            var RL = GetDemand();
-
-            List<object> list = new List<object>();
-            for (int n = 0; n < totalNodes; n++)
-            {
-                var genSolutions = PowerSystem.Nodes[n].UnitsIndex.Select(g => GSolutions[g]);
-                var resSolutions = PowerSystem.Nodes[n].RESindex.Select(g => RSolutions[g]);
-                for (int t = 0; t < totalTime; t++)
-                {
-                    if (Math.Abs(RL[n, t]) > 0.1)
-                    {
-
-                        var totalRES = RSolutions.Sum(x => x.Dispatch[t]);
-                        var gen = genSolutions.Sum(g => g.CurrentDispatchAtTime[t]);
-                        var res = resSolutions.Sum(g => g.Dispatch[t]);
-                        var export = TSolution.CurrentExport[n, t];
-                        var demand = PowerSystem.Nodes[n].NodalDemand(t);
-
-                        var lsit = new List<double>() { t, RL[n, t], gen, res, export, demand, totalRES };
-                        list.Add("(" + string.Join(",", lsit.Select(x => Math.Round(x, 2))) + ")");
-                    }
-                }
-            }
-            File.AppendAllText(@"C:\Users\Rogier\Desktop\RLLog.txt", String.Join("\t", list) + "\n");
-        }
-
-        private void CheckNodes()
-        {
-            var RL = GetDemand();
-            var HS = new HashSet<int>();
-            for (int n = 0; n < totalTime; n++)
-            {
-                for (int t = 0; t < totalTime; t++)
-                {
-                    if (Math.Abs(RL[n, t]) > 1)
-                    {
-
-                        HS.Add(n);
-                    }
-                }
-            }
-            Console.WriteLine(String.Join("\t", HS));
-        }
     }
-
-    //private void Check()
-    //{
-    //    var commits = new int[totalTime, totalUnits];
-    //    var Ps = new double[totalTime, totalUnits];
-    //    for (int t = 0; t < totalTime; t++)
-    //    {
-    //        for (int g = 0; g < totalUnits; g++)
-    //        {
-    //            commits[t, g] = GSolutions[g].OldSolution.Steps[t].On ? 1 : 0;
-    //            Ps[t, g] = GSolutions[g].CurrentDispatchAtTime[t];
-    //        }
-    //    }
-    //    Resolve.Check(commits, Ps);
-    //}
 
 }

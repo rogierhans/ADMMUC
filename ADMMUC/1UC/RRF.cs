@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-
+using System.Diagnostics;
 namespace ADMMUC._1UC
 {
 
@@ -19,9 +19,13 @@ namespace ADMMUC._1UC
             Reduction = reduction;
 
         }
+
+        Stopwatch sw = new Stopwatch(); 
         public SUCSolution GetSolution()
         {
+            sw.Restart();
             FillInDP();
+            GLOBAL.DPTimes.Add(sw.Elapsed.TotalMilliseconds / UC.LagrangeMultipliers.Count);
             int t = UC.LagrangeMultipliers.Count - 1;
             double bestValue = double.MaxValue;
             int bestTau = int.MaxValue;
@@ -90,21 +94,28 @@ namespace ADMMUC._1UC
             //UC.CreateEnv();
             //UC.CalcOptimum();
             //Console.ReadLine();
+            GLOBAL.Times.Add(sw.Elapsed.TotalMilliseconds / UC.LagrangeMultipliers.Count);
             return new SUCSolution(UC, solution, GetScore());
         }
 
         public void FillInDP()
         {
+            //O(|T|)
             stop = new double[UC.LagrangeMultipliers.Count, UC.MinDownTime];
+
+            //O(1)
             for (int tau = 0; tau < UC.MinDownTime; tau++)
             {
                 stop[0, tau] = 0;
             }
+            //O(|T|)
             Fs = new List<F>[UC.LagrangeMultipliers.Count];
+            //O(|T|)
             for (int z = 0; z < UC.LagrangeMultipliers.Count; z++)
             {
                 Fs[z] = new List<F>();
             }
+            //O(?)
             AddNew(0, UC.StartCost);
             for (int h = 1; h < UC.TotalTime; h++)
             {
@@ -117,8 +128,6 @@ namespace ADMMUC._1UC
                 Update(h);
                 var bestStart = Math.Min(UC.StartCost, UC.StartCost + stop[h - 1, UC.MinDownTime - 1]);
                 AddNew(h, bestStart);
-
-
             }
 
         }
@@ -148,6 +157,7 @@ namespace ADMMUC._1UC
         }
 
         // public List<int> tempCount = new List<int>();
+        Stopwatch sw2 = new();
         internal void Update(int h)
         {
             // Print(h);
@@ -157,16 +167,30 @@ namespace ADMMUC._1UC
                 Fs[h].Add(new F(z));
             }
             //ListOfZ[h] = ListOfZ[h - 1].Select(z => new ZP(z)).ToList();
+            sw2.Restart();
             foreach (var Z in Fs[h])
             {
+
                 Z.NextPoints(h);
+                //Z.IncreasePoints(h);
+            }
+            GLOBAL.RemovalTime.Add(sw2.Elapsed.TotalMilliseconds);
+            foreach (var Z in Fs[h])
+            {
+
+               // Z.NextPoints(h);
                 Z.IncreasePoints(h);
             }
+
             if (h % 2 == 0 && h > UC.MinUpTime && Reduction)
             {
+
                 OGremoveWeaklings(h);
+
                 //AltRemoveWeaklings(h);
             }
+            GLOBAL.Ks.Add(Fs[h].Count());
+            
             //Print(h);
 
             //Picture();
