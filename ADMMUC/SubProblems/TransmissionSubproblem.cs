@@ -8,7 +8,7 @@ using System.Diagnostics;
 using System.IO;
 namespace ADMMUC.Solutions
 {
-  public  class ADMMTrans
+  public  class TransmissionSubproblem
     {
         private readonly List<TransmissionLine> Lines;
 
@@ -20,7 +20,7 @@ namespace ADMMUC.Solutions
         private double[,] _currentExport;
         public double[,] CurrentExport { get => _currentExport; set => _currentExport = value; }
 
-        public ADMMTrans(PowerSystem ps, int totalTime)
+        public TransmissionSubproblem(PowerSystem ps, int totalTime)
         {
 
             totalNodes = ps.Nodes.Count;

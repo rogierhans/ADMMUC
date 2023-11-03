@@ -6,13 +6,13 @@ using System.Threading.Tasks;
 
 namespace ADMMUC.Solutions
 {
-    public class ResSolution
+    public class RESSubProblem
     {
         public double[] MaxDisptach;
         public double[] Dispatch;
         readonly int NodeID;
         readonly int TotalDispatchHorizon;
-        public ResSolution(double[] maxDisptach, int node, int totaltime)
+        public RESSubProblem(double[] maxDisptach, int node, int totaltime)
         {
             NodeID = node;
             MaxDisptach = maxDisptach;

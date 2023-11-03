@@ -9,7 +9,7 @@ using ADMMUC._1UC;
 namespace ADMMUC.Solutions
 {
     [Serializable]
-    public class GenerationSolution
+    public class GenerationSubproblem
     {
         readonly int NodeID;
 
@@ -23,7 +23,7 @@ namespace ADMMUC.Solutions
         private Gurobi1UC G1UC;
 
         private string Name;
-        public GenerationSolution(SUC SGUC, int time, int nodeID, string name)
+        public GenerationSubproblem(SUC SGUC, int time, int nodeID, string name)
         {
             this.SGUC = SGUC;
             CurrentDispatchAtTime = new double[time];
@@ -53,7 +53,7 @@ namespace ADMMUC.Solutions
         }
         static int counter = 0;
         static int extraCounter = 0;
-        public double Reevaluate(double[,] Multipliers, double[,] Demand, double rho, int totalTime, bool test = false)
+        public void Reevaluate(double[,] Multipliers, double[,] Demand, double rho, int totalTime)
         {
             Substract(Demand);
             var LagrangeMultipliers = new double[totalTime];
@@ -78,9 +78,6 @@ namespace ADMMUC.Solutions
             }
             OldSolution = solution;
             Add(Demand);
-
-            if (!test) return 0;
-            return ExtractForTesting(LagrangeMultipliers, Bmultiplier, Cmultiplier);
         }
 
         private double ExtractForTesting(double[] LagrangeMultipliers, double[] Bmultiplier, double[] Cmultiplier)

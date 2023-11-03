@@ -14,9 +14,9 @@ namespace ADMMUC.Solutions
     {
         protected readonly PowerSystem PowerSystem;
         protected readonly double[,] NodeMultipliers;
-        public GenerationSolution[] GSolutions;
-        public ResSolution[] RSolutions;
-        public ADMMTrans TSolution;
+        public GenerationSubproblem[] GenerationSubproblems;
+        public RESSubProblem[] RESSubProblems;
+        public TransmissionSubproblem TransmisssionSubproblems;
         readonly protected int totalTime;
         readonly protected int totalNodes;
         readonly protected int totalRes;
@@ -43,7 +43,7 @@ namespace ADMMUC.Solutions
 
             SetMultipliers();
             CreateGenerationSolution(totalTime, fileName.Split('\\').Last().Split('.').First());
-            TSolution = new ADMMTrans(PowerSystem, totalTime);
+            TransmisssionSubproblems = new TransmissionSubproblem(PowerSystem, totalTime);
             CreateResSolutions(totalTime);
             this.rhoUpdateCounter = rhoUpdateCounter;
         }
@@ -77,7 +77,7 @@ namespace ADMMUC.Solutions
         protected int solutioncounter = 0;
         bool Converged()
         {
-            if ((GSolutions.Sum(g => g.ReevalCost) > 100 && AbsoluteResidualLoad() < 0.001) && ConvergedObjective())
+            if ((GenerationSubproblems.Sum(g => g.ReevalCost) > 100 && AbsoluteResidualLoad() < 0.001) && ConvergedObjective())
             {
                 solutioncounter++;
             }
@@ -97,44 +97,37 @@ namespace ADMMUC.Solutions
             }
 
             FinalIteration = i;
-            FinalScore = GSolutions.Sum(g => g.ReevalCost);
+            FinalScore = GenerationSubproblems.Sum(g => g.ReevalCost);
         }
 
 
         public double GetScore()
         {
 
-            return AbsoluteResidualLoad() * PowerSystem.VOLL + GSolutions.Sum(g => g.ReevalCost);
+            return AbsoluteResidualLoad() * PowerSystem.VOLL + GenerationSubproblems.Sum(g => g.ReevalCost);
         }
 
         protected readonly Random RNG = new();
         protected readonly List<double> Values = new();
 
-        public bool Test1UC = false;
 
         public List<double> Deltas = new List<double>();
 
         public virtual void Iteration(int rhoUpdateCounter)
         {
             var CurrentDemand = GetDemand();
-            foreach (var g in Enumerable.Range(0, RSolutions.Length).OrderBy(i => RNG.NextDouble()).ToList())
+            foreach (var g in Enumerable.Range(0, RESSubProblems.Length).OrderBy(i => RNG.NextDouble()).ToList())
             {
-                RSolutions[g].Reevaluate(NodeMultipliers, CurrentDemand, Rho, totalTime);
+                RESSubProblems[g].Reevaluate(NodeMultipliers, CurrentDemand, Rho, totalTime);
             }
-            foreach (var g in Enumerable.Range(0, GSolutions.Length).OrderBy(i => RNG.NextDouble()).ToList())
+            foreach (var g in Enumerable.Range(0, GenerationSubproblems.Length).OrderBy(i => RNG.NextDouble()).ToList())
             {
-                if (GLOBAL.UseGurobi)
-                    GSolutions[g].ReGurobi(NodeMultipliers, CurrentDemand, Rho, totalTime);
-                else
-                {
-                    var delta = GSolutions[g].Reevaluate(NodeMultipliers, CurrentDemand, Rho, totalTime, Test1UC);
-                    Deltas.Add(delta);
-                }
+                GenerationSubproblems[g].Reevaluate(NodeMultipliers, CurrentDemand, Rho, totalTime);
             }
 
             if (PowerSystem.Nodes.Count > 1)
             {
-                TSolution.Reevaluate(NodeMultipliers, CurrentDemand, Rho);
+                TransmisssionSubproblems.Reevaluate(NodeMultipliers, CurrentDemand, Rho);
             }
             UpdateMultiplers(Rho);
             if (counter++ % rhoUpdateCounter == 0 && GLOBAL.IncreaseRho)
@@ -146,20 +139,20 @@ namespace ADMMUC.Solutions
                     rhoUpdateCounter = 1;
                 }
             }
-            Values.Add(GSolutions.Sum(g => g.ReevalCost));
+            Values.Add(GenerationSubproblems.Sum(g => g.ReevalCost));
         }
         protected void CreateResSolutions(int totalTime)
         {
-            RSolutions = new ResSolution[totalRes];
+            RESSubProblems = new RESSubProblem[totalRes];
             for (int r = 0; r < totalRes; r++)
             {
-                RSolutions[r] = new ResSolution(PowerSystem.Res[r].ResValues.ToList().Take(totalTime).ToArray(), PowerSystem.Nodes.First(n => n.RESindex.Contains(r)).ID, totalTime);
+                RESSubProblems[r] = new RESSubProblem(PowerSystem.Res[r].ResValues.ToList().Take(totalTime).ToArray(), PowerSystem.Nodes.First(n => n.RESindex.Contains(r)).ID, totalTime);
             }
         }
 
         protected void CreateGenerationSolution(int totalTime, string name)
         {
-            GSolutions = new GenerationSolution[totalUnits + totalNodes];
+            GenerationSubproblems = new GenerationSubproblem[totalUnits + totalNodes];
             for (int u = 0; u < totalUnits; u++)
             {
                 var unit = PowerSystem.Units[u];
@@ -172,14 +165,14 @@ namespace ADMMUC.Solutions
                 int SD = (int)Math.Max(pMin, unit.ShutDown);
                 int SU = (int)Math.Max(pMin, unit.StartUp);
                 var SGU = new SUC(unit.A, unit.B, unit.C, unit.StartCostInterval.First(), pMax, pMin, RU, RD, MinUp, minDownTime, SU, SD, totalTime);
-                GSolutions[u] = new GenerationSolution(SGU, totalTime, PowerSystem.Nodes.First(node => node.UnitsIndex.Contains(u)).ID, name);
+                GenerationSubproblems[u] = new GenerationSubproblem(SGU, totalTime, PowerSystem.Nodes.First(node => node.UnitsIndex.Contains(u)).ID, name);
             }
             for (int n = 0; n < totalNodes; n++)
             {
                 int index = totalUnits + n;
                 var max = 10000;
                 var UC = new SUC(0, 10000, 0, 0, max, 0, max, max, 2, 2, max, max, totalTime);
-                GSolutions[index] = new GenerationSolution(UC, totalTime, n, name);
+                GenerationSubproblems[index] = new GenerationSubproblem(UC, totalTime, n, name);
                 PowerSystem.Nodes[n].UnitsIndex.Add(index);
             }
         }
@@ -217,13 +210,13 @@ namespace ADMMUC.Solutions
         {
             for (int n = 0; n < totalNodes; n++)
             {
-                var genSolutions = PowerSystem.Nodes[n].UnitsIndex.Select(g => GSolutions[g]);
-                var resSolutions = PowerSystem.Nodes[n].RESindex.Select(g => RSolutions[g]); ;
+                var genSolutions = PowerSystem.Nodes[n].UnitsIndex.Select(g => GenerationSubproblems[g]);
+                var resSolutions = PowerSystem.Nodes[n].RESindex.Select(g => RESSubProblems[g]); ;
                 for (int t = 0; t < totalTime; t++)
                 {
                     Demand[n, t] = -genSolutions.Sum(g => g.CurrentDispatchAtTime[t]);
                     Demand[n, t] += -resSolutions.Sum(g => g.Dispatch[t]);
-                    Demand[n, t] += TSolution.CurrentExport[n, t];
+                    Demand[n, t] += TransmisssionSubproblems.CurrentExport[n, t];
                     Demand[n, t] += PowerSystem.Nodes[n].NodalDemand(t);
                 }
             }
